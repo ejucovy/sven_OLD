@@ -1,5 +1,3 @@
-sven is a library to help you put content in SVN.
-
 It requires `pysvn` which you will probably want to install system-wide.
 
 Basic usage:
