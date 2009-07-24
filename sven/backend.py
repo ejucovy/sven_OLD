@@ -1,7 +1,7 @@
 from operator import attrgetter
 import os
 import pysvn
-from exc import *
+from sven.exc import *
 
 #def notify(event):
     #import pdb; pdb.set_trace()
