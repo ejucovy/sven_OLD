@@ -222,7 +222,8 @@ class SvnAccess(object):
                 try: 
                     self.client.add(root_to_add)
                 except pysvn.ClientError, e:
-                    continue
+                    root_to_add = '/'.join(path[:i]) #rollback
+                    break
             self.client.checkin([root_to_add], "auto-creating directories")
             self.client.update('/'.join(path))
 
