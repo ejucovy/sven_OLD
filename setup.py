@@ -5,7 +5,7 @@ version = '0.1.2'
 
 setup(name='sven',
       version=version,
-      description="sven is a library to help you put content in SVN"
+      description="sven is a library to help you put content in SVN",
       long_description=open('README.txt').read(),
       classifiers=[],
       keywords='',
