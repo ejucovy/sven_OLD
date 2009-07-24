@@ -223,7 +223,7 @@ class SvnAccess(object):
                 try: 
                     self.client.add(root_to_add)
                     success = True
-                except pysvn.ClientError, e:
+                except pysvn.ClientError, e: #XXX TODO: typecheck this error
                     if not success:
                         # the resource is already under version control
                         # but not because we just added it. keep walking
