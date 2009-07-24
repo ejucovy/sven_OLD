@@ -6,8 +6,7 @@ version = '0.1.2'
 setup(name='sven',
       version=version,
       description="sven is a helpful fellow who wants you to use svn for more things",
-      long_description="""\
-""",
+      long_description=open('README.txt').read(),
       classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
       keywords='',
       author='Ethan Jucovy & Jeff Hammel',
