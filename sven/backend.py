@@ -1,7 +1,6 @@
 from operator import attrgetter
 import os
 import pysvn
-import subprocess
 from exc import *
 
 #def notify(event):
