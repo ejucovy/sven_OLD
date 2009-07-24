@@ -11,14 +11,16 @@ class SvnAccess(object):
     def __init__(self, svnuri, checkout_dir,
                  config_location=None):
         self.svnuri = svnuri
+
         if config_location and not config_location.startswith('/'):
             config_location = os.path.join(checkout_dir, config_location)
 
-        if config_location.endswith('/'):
+        if config_location and config_location.endswith('/'):
             config_location = config_location.rstrip('/')
 
         self.config_location = config_location or ''
         print self.config_location
+
         os.chdir(checkout_dir)
         self.checkout_dir = checkout_dir
 
