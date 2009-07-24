@@ -217,12 +217,25 @@ class SvnAccess(object):
             os.makedirs(path)
 
             path = path.split('/')
+            success = False
             for i in range(len(path)):
                 root_to_add = '/'.join(path[:i+1])
                 try: 
                     self.client.add(root_to_add)
+                    success = True
                 except pysvn.ClientError, e:
-                    root_to_add = '/'.join(path[:i]) #rollback
+                    if not success:
+                        # the resource is already under version control
+                        # but not because we just added it. keep walking
+                        # up the chain to find something that isn't yet
+                        # under version control.
+                        continue
+                    
+                    # the resource is already under version control
+                    # because we just added its parent directory.
+                    # walk one step down the chain to get back to the
+                    # root directory that we just added.
+                    root_to_add = '/'.join(path[:i])
                     break
             self.client.checkin([root_to_add], "auto-creating directories")
             self.client.update('/'.join(path))
