@@ -1,0 +1,124 @@
+
+First, the test setup: we'll set up a repository and local checkout.
+Sven won't do this for you:
+
+   >>> repo_dir = '/tmp/svensvn/'; checkout_dir = '/tmp/svencheckout';
+   >>> import subprocess
+   >>> subprocess.call(['rm', '-rf', repo_dir, checkout_dir])
+   0
+   >>> subprocess.call(['svnadmin', 'create', repo_dir])
+   0
+   >>> subprocess.call(['svn', 'co', 'file://%s'%repo_dir, checkout_dir])
+   0
+
+Instantiate an object that knows about your repository:
+
+   >>> from sven.backend import SvnAccess
+   >>> client = SvnAccess(repo_dir, checkout_dir)
+
+Sven throws its own flavors of IOErrors to deal with various edge cases of
+interacting with the repository. For instance, trying to get metadata on
+a resource that doesn't exist:
+
+   >>> client.last_changed_rev('/path/to/file')
+   Traceback (most recent call last):
+   ...
+   NoSuchResource: [Errno 2] No such file or directory: 'path/to/file'
+
+The same error is thrown if you're looking for a particular revision:
+
+   >>> client.last_changed_rev('/path/to/file', rev=4)
+   Traceback (most recent call last):
+   ...
+   NoSuchResource: [Errno 2] No such file or directory: 'path/to/file'
+
+Or if you're trying to get the contents of a resource:
+
+   >>> client.read('/path/to/file')
+   Traceback (most recent call last):
+   ...
+   NoSuchResource: [Errno 2] No such file or directory: 'path/to/file'
+
+   >>> client.read('/path/to/file', rev=4)
+   Traceback (most recent call last):
+   ...
+   NoSuchResource: [Errno 2] No such file or directory: 'path/to/file'
+
+Now let's actually save a file. Sven's workflow encourages you to think
+of your repository as a filesystem; you write to a file and commit it
+to the repository in a single step:
+   
+   >>> client.write('file', "first version")
+
+Sven will create all necessary directories based on the resource path:
+
+   >>> client.write('/path/to/file', "a second versioned content")
+
+Commit changes to a file in the same way as saving a new file:
+
+   >>> client.write('/file', "second version")
+
+Now that we have some resources, we can finally start reading them too:
+
+   >>> client.read('file')
+   {'body': "second version", 'kind': None}
+
+And we can read previous versions as well, by passing in the desired
+global revision number:
+
+   >>> client.read('file', rev=1)
+   {'body': "first version", 'kind': None}
+
+Sven will throw a different flavor of IOError if you try to read content
+from a path that exists, but is a directory instead of a file:
+
+   >>> client.read('/path')
+   Traceback (most recent call last):
+   ...
+   NotAFile
+
+To read the most recent version of a resource, don't pass in any revision:
+
+   >>> client.read('path/to/file')
+   {'body': "a second versioned content", 'kind': None}
+
+But if you do pass in a revision, sven will tell you if the file was unchanged
+in that revision, with a custom exception:
+
+   >>> client.read('path/to/file', rev=3)
+   Traceback (most recent call last):
+   ...
+   ResourceUnchanged
+
+This ResourceUnchaged exception contains the revision number of the last
+change made to the file:
+
+   >>> from sven.exc import ResourceUnchanged
+   >>> try:
+   >>>     client.read('path/to/file', rev=3)
+   >>> except ResourceUnchanged, e:
+   >>>     print "last changed at r%d" % e.last_change
+   last changed at r2
+   
+   >>> client.read('path/to/file', rev=2)
+   {'body': "a second versioned content", 'kind': None}   
+
+You cannot overwrite directories with files, of course:
+
+   >>> client.write('/path/to', "i'm gonna clobber this directory with a file!")
+   Traceback (most recent call last):
+   ...
+   NotAFile
+
+When writing a file, you can pass in a commit message, and you can also
+set the file's svn:mime-type property:
+
+   >>> client.write('file', "now with metadata',
+   ...              msg="Changed the content",
+   ...              kind="text/plain")
+
+   >>> client.read('file')
+   {'body': "now with metadata", 'kind': "text/plain"}
+
+Great work!
+

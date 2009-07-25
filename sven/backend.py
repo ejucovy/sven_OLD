@@ -18,7 +18,6 @@ class SvnAccess(object):
             config_location = config_location.rstrip('/')
 
         self.config_location = config_location or ''
-        print self.config_location
 
         os.chdir(checkout_dir)
         self.checkout_dir = checkout_dir
@@ -41,6 +40,8 @@ class SvnAccess(object):
                 info = self.client.info2(uri, rev)
             except pysvn.ClientError, e:
                 if e[1][0][1] == 150004: # has no URL
+                    raise NoSuchResource(uri)
+                if e[1][0][1] == 155007: # not a working copy
                     raise NoSuchResource(uri)
                 raise                
         else:
@@ -260,3 +261,6 @@ class SvnAccess(object):
         self.client.checkin([uri], msg)
         self.client.update('.')
 
+if __name__ == '__main__':
+    import doctest
+    doctest.testfile('doctest.txt')
