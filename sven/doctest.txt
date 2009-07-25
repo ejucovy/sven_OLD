@@ -61,13 +61,13 @@ Commit changes to a file in the same way as saving a new file:
 Now that we have some resources, we can finally start reading them too:
 
    >>> client.read('file')
-   {'body': "second version", 'kind': None}
+   {'body': 'second version\n', 'kind': None}
 
 And we can read previous versions as well, by passing in the desired
 global revision number:
 
    >>> client.read('file', rev=1)
-   {'body': "first version", 'kind': None}
+   {'body': 'first version\n', 'kind': None}
 
 Sven will throw a different flavor of IOError if you try to read content
 from a path that exists, but is a directory instead of a file:
@@ -75,50 +75,50 @@ from a path that exists, but is a directory instead of a file:
    >>> client.read('/path')
    Traceback (most recent call last):
    ...
-   NotAFile
+   NotAFile: [Errno 21] Is a directory: 'path'
 
 To read the most recent version of a resource, don't pass in any revision:
 
    >>> client.read('path/to/file')
-   {'body': "a second versioned content", 'kind': None}
+   {'body': 'a second versioned content\n', 'kind': None}
 
 But if you do pass in a revision, sven will tell you if the file was unchanged
 in that revision, with a custom exception:
 
-   >>> client.read('path/to/file', rev=3)
+   >>> client.read('path/to/file', rev=4)
    Traceback (most recent call last):
    ...
-   ResourceUnchanged
+   ResourceUnchanged: Resource 'path/to/file' unchanged since 3
 
 This ResourceUnchaged exception contains the revision number of the last
 change made to the file:
 
    >>> from sven.exc import ResourceUnchanged
    >>> try:
-   >>>     client.read('path/to/file', rev=3)
-   >>> except ResourceUnchanged, e:
-   >>>     print "last changed at r%d" % e.last_change
-   last changed at r2
+   ...     client.read('path/to/file', rev=4)
+   ... except ResourceUnchanged, e:
+   ...     print "last changed at r%d" % e.last_change
+   last changed at r3
    
-   >>> client.read('path/to/file', rev=2)
-   {'body': "a second versioned content", 'kind': None}   
+   >>> client.read('path/to/file', rev=3)
+   {'body': 'a second versioned content\n', 'kind': None}
 
 You cannot overwrite directories with files, of course:
 
    >>> client.write('/path/to', "i'm gonna clobber this directory with a file!")
    Traceback (most recent call last):
    ...
-   NotAFile
+   NotAFile: [Errno 21] Is a directory: 'path/to'
 
 When writing a file, you can pass in a commit message, and you can also
 set the file's svn:mime-type property:
 
-   >>> client.write('file', "now with metadata',
+   >>> client.write('file', "now with metadata",
    ...              msg="Changed the content",
    ...              kind="text/plain")
 
    >>> client.read('file')
-   {'body': "now with metadata", 'kind': "text/plain"}
+   {'body': 'now with metadata\n', 'kind': 'text/plain'}
 
 Great work!
 
