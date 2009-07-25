@@ -50,7 +50,7 @@ to the repository in a single step:
    
    >>> client.write('file', "first version")
 
-Sven will create all necessary directories based on the resource path:
+Sven will create all necessary directories based on the resource path[1]:
 
    >>> client.write('/path/to/file', "a second versioned content")
 
@@ -121,4 +121,20 @@ set the file's svn:mime-type property:
    {'body': 'now with metadata\n', 'kind': 'text/plain'}
 
 Great work!
+
+[1] "Sven will create all necessary directories based on the resource path"
+This is actually tricky -- so let's exercise it in a couple of cases:
+
+   >>> client.write('a_file_at_the_root', "foo")
+   >>> client.write('one_level/deep', "foo")
+   >>> client.write('one_level/again', "foo")
+   >>> client.write('totally/nonexistent/path_to/a_file', "foo")
+   >>> client.write('totally/partly/extant_path/to_a_file', "foo")
+   >>> client.write('totally/partly/extant/path/to_another_file', "foo")
+   >>> client.write('a_file_at_the_root', "foobar")
+   >>> client.write('one_level/deep', "foobar")
+   >>> client.write('one_level/again', "foobar")
+   >>> client.write('totally/nonexistent/path_to/a_file', "foobar")
+   >>> client.write('totally/partly/extant_path/to_a_file', "foobar")
+   >>> client.write('totally/partly/extant/path/to_another_file', "foobar")
 
