@@ -8,7 +8,8 @@ from sven.exc import *
 
 class SvnAccess(object):
     def __init__(self, svnuri, checkout_dir,
-                 config_location=None):
+                 config_location=None,
+                 update_after_write=True):
         self.svnuri = svnuri
 
         if config_location and not config_location.startswith('/'):
@@ -21,6 +22,8 @@ class SvnAccess(object):
 
         os.chdir(checkout_dir)
         self.checkout_dir = checkout_dir
+
+        self.update_after_write = update_after_write
 
     @property
     def client(self):
@@ -195,7 +198,7 @@ class SvnAccess(object):
     
         return properties.get(uri)
 
-    def set_kind(self, uri, kind, msg=None):
+    def set_kind(self, uri, kind, msg=None, update_after_write=False):
         uri = uri.strip('/')
 
         self.client.propset('svn:mime-type', kind, uri)
@@ -203,9 +206,11 @@ class SvnAccess(object):
         if not msg:
             msg = "Set svn:mime-type property to '%s'" % kind
         self.client.checkin([uri], msg)
-        self.client.update('.')
+        
+        if update_after_write or self.update_after_write:
+            self.client.update('.')
 
-    def write(self, uri, contents, msg=None, kind=None):
+    def write(self, uri, contents, msg=None, kind=None, update_after_write=False):
         uri = uri.strip('/')
 
         if os.path.isdir(uri): # we can't write to a directory
@@ -259,7 +264,9 @@ class SvnAccess(object):
             self.client.propset('svn:mime-type', kind, uri)
 
         self.client.checkin([uri], msg)
-        self.client.update('.')
+
+        if update_after_write or self.update_after_write:
+            self.client.update('.')
 
 if __name__ == '__main__':
     import doctest
