@@ -90,6 +90,7 @@ class SvnAccess(object):
             except pysvn.ClientError, e:
                 if e[1][0][1] == 195007: # URL refers to a directory
                     raise NotAFile(uri)
+                raise
 
         try:
             return {'body': file(uri).read(),
