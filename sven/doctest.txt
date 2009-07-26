@@ -138,7 +138,10 @@ This is actually tricky -- so let's exercise it in a couple of cases:
    >>> client.write('totally/partly/extant_path/to_a_file', "foobar")
    >>> client.write('totally/partly/extant/path/to_another_file', "foobar")
 
-What about conflicts?
+Sven tries to think of your repository-backed filesystem as basically
+stateless -- a sort of RESTful approach to versioning. Because of this,
+sven tries to make version conflicts just sort of melt away by always
+clobbering the repository's copy with the client's new copy:
 
    >>> subprocess.call(['svn', 'co', 'file://%s'%repo_dir, other_checkoutdir])
    0
