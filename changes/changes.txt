@@ -12,4 +12,5 @@
 
 * Throw `exc.ResourceChanged` exceptions when a file is found to be out of date
   during a write operation (which will only happen if `update_before_write` is
-  unset by the caller)
+  unset by the caller) and revert local changes if this happens, to restore the
+  checkout to an unconflicting state.

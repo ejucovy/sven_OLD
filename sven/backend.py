@@ -294,6 +294,8 @@ class SvnAccess(object):
             self.client.checkin([absolute_uri], msg)
         except pysvn.ClientError, e:
             if e[1][0][1] == 160028: # file is out of date
+                # we roll back our attempted changes and let the caller deal with merges
+                self.client.revert(absolute_uri)
                 raise ResourceChanged(uri)
             else: # i don't know what else this would be! better not make any decisions!
                 raise

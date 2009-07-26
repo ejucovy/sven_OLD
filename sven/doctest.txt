@@ -168,10 +168,14 @@ keep files up-to-date before writing, though:
 
    >>> client.write('file', "version 1\n2\n3", update_before_write=False)
 
-   >>> client2.write('file', 'booga booga boo', update_before_write=False)
-   Traceback (most recent call last):
-   ...
-   ResourceChanged: Resource 'file' is out of date
+So there are a couple of approaches possible here if you prefer to keep
+auto-updates off for performance reasons. One simple approach would be
+to assume that writes will succeed until proven otherwise, while retaining
+sven's natural inclination to clobber conflicting changesets, viz.:
 
-   >>> client.write('file', "version 1\n5\n3", update_before_write=False)
+   >>> try:
+   ...     client2.write('file', 'booga booga boo', update_before_write=False)
+   ... except ResourceChanged:
+   ...     client2.write('file', 'booga booga boo', update_before_write=True)
+
 
