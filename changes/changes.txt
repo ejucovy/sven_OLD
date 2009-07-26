@@ -1,16 +1,1 @@
-
-* Removed `SvnAccess.update_after_write` knob and instead set default value of True
-  to the `update_after_write` argument to `SvnAccess.write`; callers can implement
-  alternatives trivially by subclassing.
-
-* Added `update_before_write` argument to .write with default value of True. Turn
-  this off as well as `update_after_write` if you want to manage synchronicity in
-  exchange for potentially significant performance improvements.
-
-* Added `default_commit_message` argument to `SvnAccess` constructor. The default
-  is "foom".
-
-* Throw `exc.ResourceChanged` exceptions when a file is found to be out of date
-  during a write operation (which will only happen if `update_before_write` is
-  unset by the caller) and revert local changes if this happens, to restore the
-  checkout to an unconflicting state.
+No changes yet!
