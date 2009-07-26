@@ -1,4 +1,4 @@
-It requires `pysvn` which you will probably want to install system-wide.
+It requires `pysvn` which you will probably want to install system-wide[1].
 
 Basic usage:
 
@@ -32,3 +32,13 @@ you've already got a repository and checkout set up.
 The formats returned by some of its methods (particularly .log and .ls) are
 totally ad-hoc right now and strange; they'll probably be formalized sooner
 or later.
+
+For more detailed usage documentation please see ./sven/doctest.txt (which
+can be run as a test suite by `python sven/backend.py`)
+
+[1] If you start to experience Segmentation faults while using sven, especially
+    during .write operations, your versions of ``svn`` and ``pysvn`` are likely
+    incompatible (e.g. svn 1.5 with pysvn compiled against your earlier svn 1.4)
+    If this happens, you should uninstall pysvn, then compile it from source.
+    You might want to test for this upfront by running the test suite:
+     python sven/backend.py
