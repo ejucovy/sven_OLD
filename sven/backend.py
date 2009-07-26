@@ -20,7 +20,7 @@ class SvnAccess(object):
 
         self.config_location = config_location or ''
 
-        os.chdir(checkout_dir)
+        #os.chdir(checkout_dir)
         self.checkout_dir = checkout_dir
 
         self.update_after_write = update_after_write
@@ -36,7 +36,7 @@ class SvnAccess(object):
 
     def last_changed_rev(self, uri, rev=None):
         uri = uri.strip('/')
-
+        
         if rev is not None:
             rev = pysvn.Revision(pysvn.opt_revision_kind.number, rev)
             try:
@@ -60,6 +60,7 @@ class SvnAccess(object):
                 raise
 
         last_change = info[0][1].last_changed_rev.number
+
         return last_change
 
     def read(self, uri, rev=None):
