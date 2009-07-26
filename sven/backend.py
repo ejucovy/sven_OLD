@@ -37,10 +37,12 @@ class SvnAccess(object):
     def last_changed_rev(self, uri, rev=None):
         uri = uri.strip('/')
         
+        absolute_uri = '/'.join((self.checkout_dir, uri))
+
         if rev is not None:
             rev = pysvn.Revision(pysvn.opt_revision_kind.number, rev)
             try:
-                info = self.client.info2(uri, rev)
+                info = self.client.info2(absolute_uri, rev)
             except pysvn.ClientError, e:
                 if e[1][0][1] == 150004: # has no URL
                     raise NoSuchResource(uri)
@@ -49,7 +51,7 @@ class SvnAccess(object):
                 raise                
         else:
             try:
-                info = self.client.info2(uri)
+                info = self.client.info2(absolute_uri)
             except pysvn.ClientError, e:
                 if e[1][0][1] == 200005: # not under version control
                     raise NoSuchResource(uri)
@@ -76,6 +78,8 @@ class SvnAccess(object):
                when it moved or ceased to exist.
         """
         uri = uri.strip('/')
+        absolute_uri = '/'.join((self.checkout_dir, uri))
+
         index_template = """<html><head><title></title></head>
 <body><div id='content'><ul>%s</ul></div></body></html>"""
         if rev is not None:
@@ -85,7 +89,7 @@ class SvnAccess(object):
 
             rev = pysvn.Revision(pysvn.opt_revision_kind.number, rev)
             try:
-                return {'body': self.client.cat(uri, rev),
+                return {'body': self.client.cat(absolute_uri, rev),
                         'kind': self.kind(uri),
                         }
             except pysvn.ClientError, e:
@@ -94,7 +98,7 @@ class SvnAccess(object):
                 raise
 
         try:
-            return {'body': file(uri).read(),
+            return {'body': file(absolute_uri).read(),
                     'kind': self.kind(uri),
                     }
         except IOError, e:
@@ -115,9 +119,10 @@ class SvnAccess(object):
         """
 
         uri = uri.strip('/')
+        absolute_uri = '/'.join((self.checkout_dir, uri))
 
         # if uri evals to false we're at the repo root
-        if uri and not os.path.isdir(uri):
+        if uri and not os.path.isdir(absolute_uri):
             raise NotADirectory(uri)
 
         if rev is not None:
@@ -126,9 +131,9 @@ class SvnAccess(object):
                 raise ResourceUnchanged(uri, last_change)
 
             rev = pysvn.Revision(pysvn.opt_revision_kind.number, rev)
-            contents = self.client.ls(uri, rev)
+            contents = self.client.ls(absolute_uri, rev)
         else:
-            contents = self.client.ls(uri)
+            contents = self.client.ls(absolute_uri)
 
         contents.sort(key=attrgetter('name'))
         globs = []
@@ -151,6 +156,7 @@ class SvnAccess(object):
         """
 
         uri = uri.strip('/')
+        absolute_uri = '/'.join((self.checkout_dir, uri))
 
         if rev is not None:
             last_change = self.last_changed_rev(uri, rev)
@@ -159,14 +165,16 @@ class SvnAccess(object):
 
             rev = pysvn.Revision(pysvn.opt_revision_kind.number, rev)
             try:
-                log = self.client.log(uri, rev, discover_changed_paths=True)
+                log = self.client.log(absolute_uri, rev,
+                                      discover_changed_paths=True)
             except pysvn.ClientError, e:
                 if e[1][0][1] == 150004: # has no URL
                     raise NoSuchResource(uri)
                 raise
         else:
             try:
-                log = self.client.log(uri, discover_changed_paths=True)
+                log = self.client.log(absolute_uri,
+                                      discover_changed_paths=True)
             except pysvn.ClientError, e:
                 if e[1][0][1] == 200005: # not under version control
                     raise NoSuchResource(uri)
@@ -186,9 +194,10 @@ class SvnAccess(object):
 
     def kind(self, uri):
         uri = uri.strip('/')
+        absolute_uri = '/'.join((self.checkout_dir, uri))
 
         try:
-            properties = self.client.propget('svn:mime-type', uri)
+            properties = self.client.propget('svn:mime-type', absolute_uri)
         except pysvn.ClientError, e:
             if e[1][0][1] == 150000: # not under version control
                 return ""
@@ -198,38 +207,41 @@ class SvnAccess(object):
                 return ""
             raise
     
-        return properties.get(uri)
+        return properties.get(absolute_uri)
 
     def set_kind(self, uri, kind, msg=None, update_after_write=False):
         uri = uri.strip('/')
+        absolute_uri = '/'.join((self.checkout_dir, uri))
 
-        self.client.propset('svn:mime-type', kind, uri)
+        self.client.propset('svn:mime-type', kind, absolute_uri)
         
         if not msg:
             msg = "Set svn:mime-type property to '%s'" % kind
-        self.client.checkin([uri], msg)
+        self.client.checkin([absolute_uri], msg)
         
         if update_after_write or self.update_after_write:
-            self.client.update('.')
+            self.client.update(self.checkout_dir)
 
     def write(self, uri, contents, msg=None, kind=None, update_after_write=False):
         uri = uri.strip('/')
+        absolute_uri = '/'.join((self.checkout_dir, uri))
 
-        if os.path.isdir(uri): # we can't write to a directory
+        if os.path.isdir(absolute_uri): # we can't write to a directory
             raise NotAFile(uri)
 
         parent_dir = '/'.join(uri.split('/')[:-1])
+        absolute_parent_dir = '/'.join((self.checkout_dir, parent_dir))
 
-        if parent_dir and not os.path.exists(parent_dir):
+        if parent_dir and not os.path.exists(absolute_parent_dir):
             path = '/'.join(uri.split('/')[:-1])
-            os.makedirs(path)
+            os.makedirs('/'.join((self.checkout_dir, path)))
 
             path = path.split('/')
             success = False
             for i in range(len(path)):
                 root_to_add = '/'.join(path[:i+1])
                 try: 
-                    self.client.add(root_to_add)
+                    self.client.add('/'.join((self.checkout_dir, root_to_add)))
                     success = True
                 except pysvn.ClientError, e: #XXX TODO: typecheck this error
                     if not success:
@@ -245,14 +257,16 @@ class SvnAccess(object):
                     # root directory that we just added.
                     root_to_add = '/'.join(path[:i])
                     break
-            self.client.checkin([root_to_add], "auto-creating directories")
-            self.client.update('/'.join(path))
+            self.client.checkin(['/'.join((self.checkout_dir, root_to_add))],
+                                "auto-creating directories")
+            path_to_update = '/'.join([self.checkout_dir] + path)
+            self.client.update(path_to_update)
 
-        f = file(uri, 'w')
+        f = file(absolute_uri, 'w')
         print >> f, contents
         f.close()
         try:
-            self.client.add(uri)
+            self.client.add(absolute_uri)
         except pysvn.ClientError, e:
             if e[1][0][1] == 150002: # already under version control
                 pass
@@ -263,12 +277,12 @@ class SvnAccess(object):
             msg = "foom"  ### XXX TODO default should be provided to class constructor i suppose
 
         if kind:
-            self.client.propset('svn:mime-type', kind, uri)
+            self.client.propset('svn:mime-type', kind, absolute_uri)
 
-        self.client.checkin([uri], msg)
+        self.client.checkin([absolute_uri], msg)
 
         if update_after_write or self.update_after_write:
-            self.client.update('.')
+            self.client.update(self.checkout_dir)
 
 if __name__ == '__main__':
     import doctest
