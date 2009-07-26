@@ -1,14 +1,1 @@
-
- * Now with doctests!
-
- * `SvnAccess.write` now supports an optional `update_after_write` argument.
-   If set to a True value, calls to .write will end with an `svn up` to
-   resynchronize the checkout with the repository. Default is False.
-
- * `SvnAccess.__init__` now supports an optional `update_after_write` argument.
-   If set to a True value, all calls to .write will end with an `svn up`
-   even if .write is not sent a True `update_after_write` value. Default
-   is True, so if you are concerned with performance and willing to maintain
-   synchronicity on your own, you should explicitly set this to False.
-
- * `SvnAccess.__init__` no longer executes a silent `os.chdir`.
+Nothing new yet.
