@@ -1,1 +1,8 @@
-Nothing new yet.
+
+* Removed `SvnAccess.update_after_write` knob and instead set default value of True
+  to the `update_after_write` argument to `SvnAccess.write`; callers can implement
+  alternatives trivially by subclassing.
+
+* Added `update_before_write` argument to .write with default value of True. Turn
+  this off as well as `update_after_write` if you want to manage synchronicity in
+  exchange for potentially significant performance improvements.

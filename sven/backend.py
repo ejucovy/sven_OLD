@@ -8,8 +8,7 @@ from sven.exc import *
 
 class SvnAccess(object):
     def __init__(self, svnuri, checkout_dir,
-                 config_location=None,
-                 update_after_write=True):
+                 config_location=None):
         self.svnuri = svnuri
 
         if config_location and not config_location.startswith('/'):
@@ -22,8 +21,6 @@ class SvnAccess(object):
 
         #os.chdir(checkout_dir)
         self.checkout_dir = checkout_dir
-
-        self.update_after_write = update_after_write
 
     @property
     def client(self):
@@ -209,9 +206,14 @@ class SvnAccess(object):
     
         return properties.get(absolute_uri)
 
-    def set_kind(self, uri, kind, msg=None, update_after_write=False):
+    def set_kind(self, uri, kind, msg=None, 
+                 update_before_write=True,
+                 update_after_write=True):
         uri = uri.strip('/')
         absolute_uri = '/'.join((self.checkout_dir, uri))
+
+        if update_before_write:
+            self.client.update(self.checkout_dir)
 
         self.client.propset('svn:mime-type', kind, absolute_uri)
         
@@ -219,14 +221,17 @@ class SvnAccess(object):
             msg = "Set svn:mime-type property to '%s'" % kind
         self.client.checkin([absolute_uri], msg)
         
-        if update_after_write or self.update_after_write:
+        if update_after_write:
             self.client.update(self.checkout_dir)
 
-    def write(self, uri, contents, msg=None, kind=None, update_after_write=False):
+    def write(self, uri, contents, msg=None, kind=None,
+              update_before_write=True,
+              update_after_write=True):
         uri = uri.strip('/')
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
-        self.client.update(self.checkout_dir)
+        if update_before_write:
+            self.client.update(self.checkout_dir)
 
         if os.path.isdir(absolute_uri): # we can't write to a directory
             raise NotAFile(uri)
@@ -283,7 +288,7 @@ class SvnAccess(object):
 
         self.client.checkin([absolute_uri], msg)
 
-        if update_after_write or self.update_after_write:
+        if update_after_write:
             self.client.update(self.checkout_dir)
 
 if __name__ == '__main__':
