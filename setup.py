@@ -10,7 +10,7 @@ long_description = "%s\n\nNew in version %s:\n\n%s" % (long_description,version,
 
 setup(name='sven',
       version=version,
-      description="sven is a library to help you put content in SVN",
+      description="sven is a document-oriented programming library that helps you put content in SVN",
       long_description=long_description,
       classifiers=[],
       keywords='',
