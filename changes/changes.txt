@@ -9,3 +9,7 @@
 
 * Added `default_commit_message` argument to `SvnAccess` constructor. The default
   is "foom".
+
+* Throw `exc.ResourceChanged` exceptions when a file is found to be out of date
+  during a write operation (which will only happen if `update_before_write` is
+  unset by the caller)

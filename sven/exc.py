@@ -18,3 +18,7 @@ class ResourceUnchanged(Exception):
     def __init__(self, uri, last_change):
         Exception.__init__(self, "Resource '%s' unchanged since %d" % (uri, last_change))
         self.last_change = last_change
+
+class ResourceChanged(Exception):
+    def __init__(self, uri):
+        Exception.__init__(self, "Resource '%s' is out of date" % uri)

@@ -290,7 +290,14 @@ class SvnAccess(object):
         if kind:
             self.client.propset('svn:mime-type', kind, absolute_uri)
 
-        self.client.checkin([absolute_uri], msg)
+        try:
+            self.client.checkin([absolute_uri], msg)
+        except pysvn.ClientError, e:
+            if e[1][0][1] == 160028: # file is out of date
+                raise ResourceChanged(uri)
+            else: # i don't know what else this would be! better not make any decisions!
+                raise
+
 
         if update_after_write:
             self.client.update(self.checkout_dir)

@@ -157,3 +157,21 @@ clobbering the repository's copy with the client's new copy:
    client2.read('file')['body']
    'feeble feeblefeed\n'
 
+Synchronization errors can still occur if you tell sven not to
+keep files up-to-date before writing, though:
+
+   >>> from sven.exc import ResourceChanged
+   >>> client2.write('file', 'moobly moo', update_before_write=False)
+   Traceback (most recent call last):
+   ...
+   ResourceChanged: Resource 'file' is out of date
+
+   >>> client.write('file', "version 1\n2\n3", update_before_write=False)
+
+   >>> client2.write('file', 'booga booga boo', update_before_write=False)
+   Traceback (most recent call last):
+   ...
+   ResourceChanged: Resource 'file' is out of date
+
+   >>> client.write('file', "version 1\n5\n3", update_before_write=False)
+
