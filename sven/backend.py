@@ -8,7 +8,9 @@ from sven.exc import *
 
 class SvnAccess(object):
     def __init__(self, svnuri, checkout_dir,
-                 config_location=None):
+                 config_location=None,
+                 default_commit_message=None):
+
         self.svnuri = svnuri
 
         if config_location and not config_location.startswith('/'):
@@ -21,6 +23,8 @@ class SvnAccess(object):
 
         #os.chdir(checkout_dir)
         self.checkout_dir = checkout_dir
+
+        self.default_message = default_commit_message or "foom"
 
     @property
     def client(self):
@@ -281,7 +285,7 @@ class SvnAccess(object):
                 raise
 
         if not msg: # wish we could just do `if msg is None`, but we can't.
-            msg = "foom"  ### XXX TODO default should be provided to class constructor i suppose
+            msg = self.default_message
 
         if kind:
             self.client.propset('svn:mime-type', kind, absolute_uri)
