@@ -2,8 +2,6 @@ It requires `pysvn` which you will probably want to install system-wide.
 
 Basic usage:
 
-    current_directory = os.cwd()
-
     from sven.backend import SvnAccess
     client = SvnAccess(my_svn_server_repo_uri, my_local_checkout_dir)
     
@@ -22,10 +20,6 @@ Basic usage:
         earlier_version = client.read('path/to/another/file', rev=last_rev_int)
 	
     changelog = client.log('path/to/another/file', rev=last_rev_int)
-
-    os.chdir(current_directory)  # SvnAccess.__init__ changes the cwd to that of
-                                 # the checkout directory, so watch out.
-				 # This is a bug that will be fixed sooner or later.
     
 Each `.write` writes the content to the path on the local filesystem's checkout
 and then commits it to the repository. The workflow of one-write-per-commit is
