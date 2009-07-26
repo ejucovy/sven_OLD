@@ -226,6 +226,8 @@ class SvnAccess(object):
         uri = uri.strip('/')
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
+        self.client.update(self.checkout_dir)
+
         if os.path.isdir(absolute_uri): # we can't write to a directory
             raise NotAFile(uri)
 

@@ -2,9 +2,9 @@
 First, the test setup: we'll set up a repository and local checkout.
 Sven won't do this for you:
 
-   >>> repo_dir = '/tmp/svensvn/'; checkout_dir = '/tmp/svencheckout';
+   >>> repo_dir = '/tmp/svensvn/'; checkout_dir = '/tmp/svencheckout'; other_checkoutdir = '/tmp/svenothercheckout'
    >>> import subprocess
-   >>> subprocess.call(['rm', '-rf', repo_dir, checkout_dir])
+   >>> subprocess.call(['rm', '-rf', repo_dir, checkout_dir, other_checkoutdir])
    0
    >>> subprocess.call(['svnadmin', 'create', repo_dir])
    0
@@ -137,4 +137,20 @@ This is actually tricky -- so let's exercise it in a couple of cases:
    >>> client.write('totally/nonexistent/path_to/a_file', "foobar")
    >>> client.write('totally/partly/extant_path/to_a_file', "foobar")
    >>> client.write('totally/partly/extant/path/to_another_file', "foobar")
+
+What about conflicts?
+
+   >>> subprocess.call(['svn', 'co', 'file://%s'%repo_dir, other_checkoutdir])
+   0
+
+   >>> client2 = SvnAccess(repo_dir, other_checkoutdir)
+   >>> client.write('file', "version 1\n2\n3")
+   >>> client2.write('file', 'feeble feeblefeed')
+   >>> client.write('file', "version 1\n5\n3")
+
+   >>> client.read('file')['body']
+   'version 1\n5\n3\n'
+
+   client2.read('file')['body']
+   'feeble feeblefeed\n'
 
