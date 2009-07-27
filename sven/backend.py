@@ -139,8 +139,11 @@ class SvnAccess(object):
         contents.sort(key=attrgetter('name'))
         globs = []
         for obj in contents:
-            glob = dict(href='/%s' % obj.name)
-            fields = {'id': obj.name}
+            obj_name = obj.name
+            if obj_name.startswith(self.checkout_dir):
+                obj_name = obj_name[len(self.checkout_dir):]
+            glob = dict(href='/%s' % obj_name)
+            fields = {'id': obj_name}
             if rev is not None:
                 fields['version'] = rev.number
             glob['fields'] = fields

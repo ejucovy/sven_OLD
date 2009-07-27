@@ -1,1 +1,2 @@
-No changes yet!
+* Fixed bug: SvnAccess.ls was returning its contents with absolute URIs, 
+  rather than URIs relative to the root of the repository.
