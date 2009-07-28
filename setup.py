@@ -1,12 +1,13 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.3'
+version = '0.3.1'
 
 long_description = open('README.txt').read()
 new_in_this_version = open('changes/changes.txt').read()
+history = open('changes/history.txt').read()
 
-long_description = "%s\n\nNew in version %s:\n\n%s" % (long_description,version,new_in_this_version)
+long_description = "%s\n\nNew in version %s:\n\n%s\n\nHistory:\n\n%s" % (long_description,version,new_in_this_version,history)
 
 setup(name='sven',
       version=version,
