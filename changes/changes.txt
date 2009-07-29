@@ -1,2 +1,3 @@
-* Fixed bug: SvnAccess.ls was returning its contents with absolute URIs, 
-  rather than URIs relative to the root of the repository.
+* Added simple_backend.FSAccess class, which partially implements
+  the SVNAccess API, but on a plain old filesystem. Needs tests
+  and documentation, among other things.

@@ -1,3 +1,10 @@
+0.3.1 (2009-07-28)
+==================
+
+ * Fixed bug: SvnAccess.ls was returning its contents with absolute URIs, 
+   rather than URIs relative to the root of the repository.
+
+
 0.3 (2009-07-25)
 ================
 
