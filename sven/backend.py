@@ -219,7 +219,9 @@ class SvnAccess(object):
         
         if not msg:
             msg = "Set svn:mime-type property to '%s'" % kind
-        self.client.checkin([absolute_uri], msg)
+        commit_rev = self.client.checkin([absolute_uri], msg)
+
+        return commit_rev
         
     def write(self, uri, contents, msg=None, kind=None):
         if os.path.isdir(absolute_uri): # we can't write to a directory
@@ -276,7 +278,8 @@ class SvnAccess(object):
             self.client.propset('svn:mime-type', kind, absolute_uri)
 
         try:
-            self.client.checkin([absolute_uri], msg)
+            commit_rev = self.client.checkin([absolute_uri], msg)
+            return commit_rev
         except pysvn.ClientError, e:
             if e[1][0][1] == 160028: # file is out of date
                 # we roll back our attempted changes and let the caller deal with merges
@@ -285,6 +288,26 @@ class SvnAccess(object):
             else: # i don't know what else this would be! better not make any decisions!
                 raise
 
+
+class SvnAccessEventEmitter(SvnAccess):
+    def __init__(self):
+        self.listeners = []
+
+    def add_listener(self, callback):
+        self.listeners.append(callback)
+
+    def set_kind(self, uri, kind, msg=None):
+        pre_rev = self.client.info2(uri).rev
+        post_rev = SvnAccess.set_kind(self, uri, kind, msg)
+
+        for callback in self.listeners:
+            callback(uri, contents, msg, kind, (pre_rev, post_rev))
+
+    def write(self, uri, contents, msg=None, kind=None):
+        pre_rev = self.client.info2(uri).rev
+        post_rev = SvnAccess.write(self, uri, contents, msg, kind)
+        for callback in self.listeners:
+            callback(uri, contents, msg, kind, (pre_rev, post_rev))
 
 ## XXX TODO rename this `SvnAccess` for backwards compatibility
 class SvnAccessWriteUpdateHandler(SvnAccess):
