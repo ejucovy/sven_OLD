@@ -356,7 +356,7 @@ class SvnAccessEventEmitter(SvnAccess):
         uri = uri.strip('/')
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
-        pre_rev = self.client.info2(absolute_uri).rev
+        pre_rev = self.client.info2(absolute_uri)[0][1].rev
         post_rev = SvnAccess.write(self, uri, contents, msg, kind)
         for callback in self.listeners:
             callback(uri, contents, msg, kind, (pre_rev, post_rev))
