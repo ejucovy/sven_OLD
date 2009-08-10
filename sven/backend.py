@@ -6,7 +6,7 @@ from sven.exc import *
 #def notify(event):
     #import pdb; pdb.set_trace()
 
-class SvnAccess(object):
+class BaseSvnAccess(object):
     def __init__(self, svnuri, checkout_dir,
                  config_location=None,
                  default_commit_message=None):
@@ -215,6 +215,9 @@ class SvnAccess(object):
 
     def set_kind(self, uri, kind, msg=None):
 
+        uri = uri.strip('/')
+        absolute_uri = '/'.join((self.checkout_dir, uri))
+
         self.client.propset('svn:mime-type', kind, absolute_uri)
         
         if not msg:
@@ -224,6 +227,10 @@ class SvnAccess(object):
         return commit_rev
         
     def write(self, uri, contents, msg=None, kind=None):
+
+        uri = uri.strip('/')
+        absolute_uri = '/'.join((self.checkout_dir, uri))
+
         if os.path.isdir(absolute_uri): # we can't write to a directory
             raise NotAFile(uri)
 
@@ -289,6 +296,42 @@ class SvnAccess(object):
                 raise
 
 
+
+class SvnAccessWriteUpdateHandler(BaseSvnAccess):
+    def set_kind(self, uri, kind, msg=None,
+                 update_before_write=True,
+                 update_after_write=True):
+        uri = uri.strip('/')
+        absolute_uri = '/'.join((self.checkout_dir, uri))
+
+        if update_before_write:
+            self.client.update(self.checkout_dir)
+
+        BaseSvnAccess.set_kind(self, uri, kind, msg)
+
+        if update_after_write:
+            self.client.update(self.checkout_dir)
+
+    def write(self, uri, contents, msg=None, kind=None,
+              update_before_write=True,
+              update_after_write=True):
+        uri = uri.strip('/')
+        absolute_uri = '/'.join((self.checkout_dir, uri))
+
+        if update_before_write:
+            self.client.update(self.checkout_dir)
+
+        result = BaseSvnAccess.write(self, uri, contents, msg, kind)
+
+        if update_after_write:
+            self.client.update(self.checkout_dir)
+
+        return result
+
+#bbb
+#deprecate in 0.5
+SvnAccess = SvnAccessWriteUpdateHandler
+
 class SvnAccessEventEmitter(SvnAccess):
     def __init__(self):
         self.listeners = []
@@ -308,38 +351,6 @@ class SvnAccessEventEmitter(SvnAccess):
         post_rev = SvnAccess.write(self, uri, contents, msg, kind)
         for callback in self.listeners:
             callback(uri, contents, msg, kind, (pre_rev, post_rev))
-
-## XXX TODO rename this `SvnAccess` for backwards compatibility
-class SvnAccessWriteUpdateHandler(SvnAccess):
-    def set_kind(self, uri, kind, msg=None,
-                 update_before_write=True,
-                 update_after_write=True):
-        uri = uri.strip('/')
-        absolute_uri = '/'.join((self.checkout_dir, uri))
-
-        if update_before_write:
-            self.client.update(self.checkout_dir)
-
-        SvnAccess.set_kind(self, uri, kind, msg)
-
-        if update_after_write:
-            self.client.update(self.checkout_dir)
-
-    def write(self, uri, contents, msg=None, kind=None,
-              update_before_write=True,
-              update_after_write=True):
-        uri = uri.strip('/')
-        absolute_uri = '/'.join((self.checkout_dir, uri))
-
-        if update_before_write:
-            self.client.update(self.checkout_dir)
-
-        result = SvnAccess.write(self, uri, contents, msg, kind)
-
-        if update_after_write:
-            self.client.update(self.checkout_dir)
-
-        return result
 
 if __name__ == '__main__':
     import doctest

@@ -49,14 +49,26 @@ of your repository as a filesystem; you write to a file and commit it
 to the repository in a single step:
    
    >>> client.write('file', "first version")
+   <Revision kind=number 1>
+
+Sven returns a pysvn.Revision object with information about the changeset
+you just committed.
 
 Sven will create all necessary directories based on the resource path[1]:
 
    >>> client.write('/path/to/file', "a second versioned content")
+   <Revision kind=number 3>
 
-Commit changes to a file in the same way as saving a new file:
+Wait! Why is this revision 3 instead of revision 2? The answer is that,
+when sven discovers it needs to create intermediate directories, it adds
+and checks in these directories in an internal commit. This may change
+in a later version of sven, so don't depend on it too much (but why would
+you?)
+
+You commit changes to an existing file in the same way as saving a new file:
 
    >>> client.write('/file', "second version")
+   <Revision kind=number 4>
 
 Now that we have some resources, we can finally start reading them too:
 
@@ -116,6 +128,7 @@ set the file's svn:mime-type property:
    >>> client.write('file', "now with metadata",
    ...              msg="Changed the content",
    ...              kind="text/plain")
+   <Revision kind=number 5>
 
    >>> client.read('file')
    {'body': 'now with metadata\n', 'kind': 'text/plain'}
@@ -126,17 +139,29 @@ Great work!
 This is actually tricky -- so let's exercise it in a couple of cases:
 
    >>> client.write('a_file_at_the_root', "foo")
+   <Revision kind=number 6>
    >>> client.write('one_level/deep', "foo")
+   <Revision kind=number 8>
    >>> client.write('one_level/again', "foo")
+   <Revision kind=number 9>
    >>> client.write('totally/nonexistent/path_to/a_file', "foo")
+   <Revision kind=number 11>
    >>> client.write('totally/partly/extant_path/to_a_file', "foo")
+   <Revision kind=number 13>
    >>> client.write('totally/partly/extant/path/to_another_file', "foo")
+   <Revision kind=number 15>
    >>> client.write('a_file_at_the_root', "foobar")
+   <Revision kind=number 16>
    >>> client.write('one_level/deep', "foobar")
+   <Revision kind=number 17>
    >>> client.write('one_level/again', "foobar")
+   <Revision kind=number 18>
    >>> client.write('totally/nonexistent/path_to/a_file', "foobar")
+   <Revision kind=number 19>
    >>> client.write('totally/partly/extant_path/to_a_file', "foobar")
+   <Revision kind=number 20>
    >>> client.write('totally/partly/extant/path/to_another_file', "foobar")
+   <Revision kind=number 21>
 
 Sven tries to think of your repository-backed filesystem as basically
 stateless -- a sort of RESTful approach to versioning. Because of this,
@@ -148,8 +173,11 @@ clobbering the repository's copy with the client's new copy:
 
    >>> client2 = SvnAccess(repo_dir, other_checkoutdir)
    >>> client.write('file', "version 1\n2\n3")
+   <Revision kind=number 22>
    >>> client2.write('file', 'feeble feeblefeed')
+   <Revision kind=number 23>
    >>> client.write('file', "version 1\n5\n3")
+   <Revision kind=number 24>
 
    >>> client.read('file')['body']
    'version 1\n5\n3\n'
@@ -167,6 +195,7 @@ keep files up-to-date before writing, though:
    ResourceChanged: Resource 'file' is out of date
 
    >>> client.write('file', "version 1\n2\n3", update_before_write=False)
+   <Revision kind=number 25>
 
 So there are a couple of approaches possible here if you prefer to keep
 auto-updates off for performance reasons. One simple approach would be
@@ -177,5 +206,5 @@ sven's natural inclination to clobber conflicting changesets, viz.:
    ...     client2.write('file', 'booga booga boo', update_before_write=False)
    ... except ResourceChanged:
    ...     client2.write('file', 'booga booga boo', update_before_write=True)
-
+   <Revision kind=number 26>
 

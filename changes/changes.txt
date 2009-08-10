@@ -5,12 +5,8 @@
 * Refactored SvnAccess to split out recently-added options for
   update_before/after_write into logically separate component
 
-  XXX needs to be renamed for backwards compatibility before release
-
 * SvnAccess.set_kind and .write now return the pysvn.Revision of
   the (last) commit instead of None.
-
-  XXX need to update the tests
 
 * Added SvnAccessEventEmitter class which executes a list of callback
   functions at the end of every successful .write and .set_kind action.
