@@ -1,3 +1,8 @@
+0.4.1 (2009-08-10)
+==================
+
+ * Fixed several embarrassing typos in the 0.4 release
+
 0.4 (2009-08-10)
 ================
 
