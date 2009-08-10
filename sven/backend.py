@@ -333,21 +333,30 @@ class SvnAccessWriteUpdateHandler(BaseSvnAccess):
 SvnAccess = SvnAccessWriteUpdateHandler
 
 class SvnAccessEventEmitter(SvnAccess):
-    def __init__(self):
+    def __init__(self, *args, **kw):
+        SvnAccess.__init__(self, *args, **kw)
         self.listeners = []
 
     def add_listener(self, callback):
         self.listeners.append(callback)
 
     def set_kind(self, uri, kind, msg=None):
-        pre_rev = self.client.info2(uri).rev
+
+        uri = uri.strip('/')
+        absolute_uri = '/'.join((self.checkout_dir, uri))
+
+        pre_rev = self.client.info2(absolute_uri).rev
         post_rev = SvnAccess.set_kind(self, uri, kind, msg)
 
         for callback in self.listeners:
-            callback(uri, contents, msg, kind, (pre_rev, post_rev))
+            callback(absolute_uri, contents, msg, kind, (pre_rev, post_rev))
 
     def write(self, uri, contents, msg=None, kind=None):
-        pre_rev = self.client.info2(uri).rev
+
+        uri = uri.strip('/')
+        absolute_uri = '/'.join((self.checkout_dir, uri))
+
+        pre_rev = self.client.info2(absolute_uri).rev
         post_rev = SvnAccess.write(self, uri, contents, msg, kind)
         for callback in self.listeners:
             callback(uri, contents, msg, kind, (pre_rev, post_rev))
