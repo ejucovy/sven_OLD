@@ -1,1 +1,1 @@
-No changes yet.
+Fixed several embarrassing typos in the 0.4 release.
