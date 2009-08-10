@@ -1,15 +1,15 @@
 * Added simple_backend.FSAccess class, which partially implements
   the SVNAccess API, but on a plain old filesystem. Needs tests
-  and documentation, among other things.
+  and documentation, among other things (e.g. justification)
 
 * Refactored SvnAccess to split out recently-added options for
   update_before/after_write into logically separate component
 
 * SvnAccess.set_kind and .write now return the pysvn.Revision of
-  the (last) commit instead of None.
+  the (last) commit instead of None
 
 * Added SvnAccessEventEmitter class which executes a list of callback
-  functions at the end of every successful .write and .set_kind action.
+  functions at the end of every successful .write and .set_kind action
 
   Callbacks should have the signature 
    (uri, contents, msg, kind, (pre_rev, post_rev))
