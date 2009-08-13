@@ -1,1 +1,2 @@
-no changes yet
+* The strange ad-hoc JSONish object returned by SvnAccess.ls had an
+  extra `/` prefixed to the object's 'href'. This is now fixed.

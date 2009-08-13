@@ -142,7 +142,7 @@ class BaseSvnAccess(object):
             obj_name = obj.name
             if obj_name.startswith(self.checkout_dir):
                 obj_name = obj_name[len(self.checkout_dir):]
-            glob = dict(href='/%s' % obj_name)
+            glob = dict(href='%s' % obj_name)
             fields = {'id': obj_name}
             if rev is not None:
                 fields['version'] = rev.number
