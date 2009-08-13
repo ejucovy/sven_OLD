@@ -40,6 +40,9 @@ class BaseSvnAccess(object):
         
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
+        log = self.client.log(absolute_uri,
+                              discover_changed_paths=True)
+
         if rev is not None:
             rev = pysvn.Revision(pysvn.opt_revision_kind.number, rev)
             try:
@@ -63,6 +66,32 @@ class BaseSvnAccess(object):
                 raise
 
         last_change = info[0][1].last_changed_rev.number
+        
+
+        ##### in case the file's parent directory was moved more recently than the file was changed
+        # this is particularly tricky if the sven client is "mounted" at a child directory of the moved path
+        # e.g. 
+        # touch /foo/bar/baz.txt
+        # x = SvnAccess('/foo/bar/')
+        # svn mv /foo /fleem
+        # x.info('baz.txt')
+
+        log = self.client.log(absolute_uri, discover_changed_paths=True)
+        problems = [x for x in log[0]['changed_paths']
+                    if x['copyfrom_path']]
+
+        repo_url = info[0][1]['repos_root_URL']
+        doc_url = info[0][1]['URL']
+
+        for problem in problems:
+            base_moved_path = '/'.join((repo_url.rstrip('/'), problem['path'].strip('/')))
+            if not doc_url.startswith(base_moved_path):
+                continue # actually this should be an assertion error until i know what it would mean
+            move_revision = problem.copyfrom_revision.number
+
+        if last_change > move_revision:
+            return last_change
+        return move_revision + 1
 
         return last_change
 
