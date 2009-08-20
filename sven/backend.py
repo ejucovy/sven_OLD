@@ -85,15 +85,12 @@ class BaseSvnAccess(object):
 
         for problem in problems:
             base_moved_path = '/'.join((repo_url.rstrip('/'), problem['path'].strip('/')))
-            if not doc_url.startswith(base_moved_path):
-                continue # actually this should be an assertion error until i know what it would mean
+            assert doc_url.startswith(base_moved_path), "I don't know what this means!\nPlease let me know the circumstances of this error if you hit it: ejucovy+sven@gmail.com"
             move_revision = problem.copyfrom_revision.number
 
         if last_change > move_revision:
             return last_change
         return move_revision + 1
-
-        return last_change
 
     def read(self, uri, rev=None):
         """
