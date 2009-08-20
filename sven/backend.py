@@ -90,7 +90,7 @@ class BaseSvnAccess(object):
 
         if last_change > move_revision:
             return last_change
-        return move_revision + 1
+        return move_revision + 1  # +1 is the oldest revision at which the file exists at its current location.
 
     def read(self, uri, rev=None):
         """
