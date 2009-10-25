@@ -83,14 +83,18 @@ class BaseSvnAccess(object):
         repo_url = info[0][1]['repos_root_URL']
         doc_url = info[0][1]['URL']
 
+        move_revision = None
         for problem in problems:
             base_moved_path = '/'.join((repo_url.rstrip('/'), problem['path'].strip('/')))
             assert doc_url.startswith(base_moved_path), "I don't know what this means!\nPlease let me know the circumstances of this error if you hit it: ejucovy+sven@gmail.com"
             move_revision = problem.copyfrom_revision.number
 
-        if last_change > move_revision:
-            return last_change
-        return move_revision + 1  # +1 is the oldest revision at which the file exists at its current location.
+        if move_revision:
+            if last_change > move_revision:
+                return last_change
+            return move_revision +1 # +1 is the oldest revision at which the file exists at its current location.
+
+        return last_change
 
     def read(self, uri, rev=None):
         """
