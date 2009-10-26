@@ -40,8 +40,14 @@ class BaseSvnAccess(object):
         
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
-        log = self.client.log(absolute_uri,
-                              discover_changed_paths=True)
+        try:
+            log = self.client.log(absolute_uri,
+                                  discover_changed_paths=True)
+        except pysvn.ClientError, e:
+            if e[1][0][1] == 155007: # not a working copy
+                raise NoSuchResource(uri)
+            raise                
+            
 
         if rev is not None:
             rev = pysvn.Revision(pysvn.opt_revision_kind.number, rev)
