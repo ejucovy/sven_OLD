@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = 'dev'
+version = '0.5'
 
 long_description = open('README.txt').read()
 new_in_this_version = open('changes/changes.txt').read()

@@ -7,11 +7,9 @@ from sven.exc import *
     #import pdb; pdb.set_trace()
 
 class BaseSvnAccess(object):
-    def __init__(self, svnuri, checkout_dir,
+    def __init__(self, checkout_dir,
                  config_location=None,
                  default_commit_message=None):
-
-        self.svnuri = svnuri
 
         if config_location and not config_location.startswith('/'):
             config_location = os.path.join(checkout_dir, config_location)

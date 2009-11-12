@@ -11,10 +11,10 @@ Sven won't do this for you:
    >>> subprocess.call(['svn', 'co', 'file://%s'%repo_dir, checkout_dir])
    0
 
-Instantiate an object that knows about your repository:
+Instantiate an object that knows about your local checkout directory:
 
    >>> from sven.backend import SvnAccess
-   >>> client = SvnAccess(repo_dir, checkout_dir)
+   >>> client = SvnAccess(checkout_dir)
 
 Sven throws its own flavors of IOErrors to deal with various edge cases of
 interacting with the repository. For instance, trying to get metadata on
@@ -171,7 +171,7 @@ clobbering the repository's copy with the client's new copy:
    >>> subprocess.call(['svn', 'co', 'file://%s'%repo_dir, other_checkoutdir])
    0
 
-   >>> client2 = SvnAccess(repo_dir, other_checkoutdir)
+   >>> client2 = SvnAccess(other_checkoutdir)
    >>> client.write('file', "version 1\n2\n3")
    <Revision kind=number 22>
    >>> client2.write('file', 'feeble feeblefeed')

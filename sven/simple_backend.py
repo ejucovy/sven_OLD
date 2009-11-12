@@ -7,9 +7,7 @@ from sven.exc import *
 
 
 class FSAccess(object):
-    def __init__(self, svnuri, checkout_dir):
-
-        #self.svnuri = svnuri
+    def __init__(self, checkout_dir):
 
         #if config_location and not config_location.startswith('/'):
         #    config_location = os.path.join(checkout_dir, config_location)

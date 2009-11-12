@@ -1,2 +1,6 @@
+* SvnBackend.__init__ no longer takes a 'svnuri' argument to the
+  remote repository as its first positional argument; it's not
+  used anywhere. This is a backwards-incompatible change.
+
 * The strange ad-hoc JSONish object returned by SvnAccess.ls had an
-  extra `/` prefixed to the object's 'href'. This is now fixed.
+  extra `/` prefixed to the object's 'href' erroneously; now fixed.
