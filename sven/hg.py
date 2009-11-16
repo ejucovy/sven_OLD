@@ -1,4 +1,9 @@
-from mercurial import commands as cmd, ui as UI, hg
+import os
+from StringIO import StringIO
+
+from mercurial import commands as cmd, ui as UI, hg, util as hg_util, cmdutil
+
+from sven.exc import *
 
 class HgAccess(object):
     def __init__(self, checkout_dir):
@@ -12,7 +17,32 @@ class HgAccess(object):
         ui = UI.ui()
         repo = hg.repository(ui, path)
         return repo
+
+    def read(self, uri, rev=None):
+        uri = uri.strip('/')
+        absolute_uri = '/'.join((self.checkout_dir, uri))
+
+        repo = self.client
+        ui = repo.ui
         
+        if rev is not None:
+            rev = str(rev)
+
+        ctx = repo[rev]
+        contents = StringIO()
+
+        try:
+            contents.write(ctx[uri].data())
+        except IOError, e:
+            if e.errno == 2:
+                raise NoSuchResource(uri)
+            elif e.errno == 21:
+                raise NotAFile(uri)
+            raise
+
+        contents.seek(0)
+        return dict(body=contents.read(), kind=None)
+
     def write(self, uri, contents, msg=None, kind=None):
         uri = uri.strip('/')
         absolute_uri = '/'.join((self.checkout_dir, uri))
@@ -38,12 +68,30 @@ class HgAccess(object):
 
         repo = self.client
         ui = repo.ui
+        ui.verbose = True
 
         if not msg:
             msg = "Foom!"
 
-        cmd.add(ui, repo, uri)
-        cmd.commit(ui, repo, uri, message=msg, logfile=None)
+        ui.pushbuffer()
+
+        cmd.add(ui, repo, absolute_uri)
+        cmd.commit(ui, repo, absolute_uri, message=msg, logfile=None)
+
+        out = ui.popbuffer()
+
+        for line in out.split('\n'):
+            if line.startswith("committed changeset"):
+                rev = line[len("committed changeset "):]
+                rev = rev.split(':')[0]
+                break
+
+        class Revision(object):
+            def __init__(self, rev):
+                self.rev = rev
+            def __repr__(self):
+                return "<Revision kind=number %s>" % self.rev
+        return Revision(rev)
 
     def last_changed_rev(self, uri, rev=None):
         log = self.log(uri, rev)
@@ -61,8 +109,14 @@ class HgAccess(object):
         if rev is not None:
             rev = ["%d:0" % rev]
 
-        cmd.log(ui, repo, uri, rev=rev, date=None, user=None)
-        out = ui.popbuffer()
+        try:
+            cmd.log(ui, repo, uri, rev=rev, date=None, user=None)
+        except hg_util.Abort, e:
+            if str(e).endswith("not under root"):
+                raise NoSuchResource(uri)
+            raise
+        finally:
+            out = ui.popbuffer()
 
         log_info = dict()
 
@@ -83,6 +137,11 @@ class HgAccess(object):
         return log_info
 
 if __name__ == "__main__":
+    import doctest
+    doctest.testfile('hg-doctest.txt')
+
+    import sys
+    sys.exit(0)
 
     import os
     from pprint import pprint as pprint
