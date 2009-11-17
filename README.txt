@@ -1,4 +1,3 @@
-
 It requires `pysvn` which you will probably want to install system-wide[1].
 
 Basic usage:
