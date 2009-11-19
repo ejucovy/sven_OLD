@@ -22,6 +22,11 @@ class HgAccess(object):
         uri = uri.strip('/')
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
+        if rev is not None:
+            last_change = self.last_changed_rev(uri, rev)
+            if last_change < rev:
+                raise ResourceUnchanged(uri, last_change)
+
         repo = self.client
         ui = repo.ui
         
@@ -106,11 +111,19 @@ class HgAccess(object):
         ui = repo.ui
         ui.pushbuffer()
 
+        # first make sure the file exists at the given revision
+        file = repo[rev][uri]
+        try:
+            file.data()
+        except IOError, e:
+            if e.errno == 2:
+                raise NoSuchResource(uri)
+
         if rev is not None:
             rev = ["%d:0" % rev]
 
         try:
-            cmd.log(ui, repo, uri, rev=rev, date=None, user=None)
+            cmd.log(ui, repo, absolute_uri, rev=rev, date=None, user=None)
         except hg_util.Abort, e:
             if str(e).endswith("not under root"):
                 raise NoSuchResource(uri)
