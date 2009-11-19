@@ -58,6 +58,7 @@ class HgAccess(object):
         parent_dir = '/'.join(uri.split('/')[:-1])
         absolute_parent_dir = '/'.join((self.checkout_dir, parent_dir))
 
+        root_to_add = None
         if parent_dir and not os.path.exists(absolute_parent_dir):
             path = '/'.join(uri.split('/')[:-1])
             os.makedirs('/'.join((self.checkout_dir, path)))
@@ -65,8 +66,8 @@ class HgAccess(object):
             path = path.split('/')
             success = False
             for i in range(len(path)):
-                root_to_add = '/'.join(path[:i+1])
-
+                root_to_add = '/'.join(path[:i])
+                
         f = file(absolute_uri, 'w')
         print >> f, contents
         f.close()
@@ -80,8 +81,13 @@ class HgAccess(object):
 
         ui.pushbuffer()
 
-        cmd.add(ui, repo, absolute_uri)
-        cmd.commit(ui, repo, absolute_uri, message=msg, logfile=None)
+        if root_to_add:
+            root = '/'.join((self.checkout_dir, root_to_add))
+        else:
+            root = absolute_uri
+
+        cmd.add(ui, repo, root)
+        cmd.commit(ui, repo, root, message=msg, logfile=None)
 
         out = ui.popbuffer()
 
@@ -112,13 +118,20 @@ class HgAccess(object):
         ui.pushbuffer()
 
         # first make sure the file exists at the given revision
-        file = repo[rev][uri]
         try:
-            file.data()
-        except IOError, e:
-            if e.errno == 2:
-                raise NoSuchResource(uri)
+            file = repo[rev][uri]
+        except LookupError:  # it's a directory!
+            pass
+        else:
+            try:
+                file.data()
+            except IOError, e:
+                if e.errno == 2:  # no such file or directory
+                    raise NoSuchResource(uri)
+                if e.errno == 21: # is a directory -- and exists, so we're cool
+                    pass
 
+        raw_rev = rev
         if rev is not None:
             rev = ["%d:0" % rev]
 
@@ -146,6 +159,18 @@ class HgAccess(object):
                 line_info = []
             line = line.split(':', 1)
             line_info.append((line[0].strip(), line[1].strip()))
+
+        # here's where we want to get suspicious.
+        # if there's no apparent log for any changes
+        # under the given uri, and there's no record of
+        # files under the uri in the changeset,
+        # we're gonna say this just doesn't exist.
+        if not log_info:
+            files = repo[raw_rev].files()
+            files_in_this_path = [file for file in files
+                                  if file.startswith(uri)]
+            if not files_in_this_path:
+                raise NoSuchResource(uri)
 
         return log_info
 

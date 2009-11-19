@@ -129,8 +129,8 @@ You cannot overwrite directories with files, of course:
    ...
    NotAFile: [Errno 21] Is a directory: 'path/to'
 
-When writing a file, you can pass in a commit message, and you can also
-set the file's svn:mime-type property:
+When writing a file, you can pass in a commit message, but there's no
+support for file-level metadata in Sven HG now::
 
    >>> client.write('file', "now with metadata",
    ...              msg="Changed the content",
@@ -138,7 +138,7 @@ set the file's svn:mime-type property:
    <Revision kind=number 5>
 
    >>> client.read('file')
-   {'body': 'now with metadata\n', 'kind': 'text/plain'}
+   {'body': 'now with metadata\n', 'kind': None}
 
 Great work!
 
@@ -148,70 +148,40 @@ This is actually tricky -- so let's exercise it in a couple of cases:
    >>> client.write('a_file_at_the_root', "foo")
    <Revision kind=number 6>
    >>> client.write('one_level/deep', "foo")
-   <Revision kind=number 8>
+   <Revision kind=number 7>
    >>> client.write('one_level/again', "foo")
-   <Revision kind=number 9>
+   <Revision kind=number 8>
    >>> client.write('totally/nonexistent/path_to/a_file', "foo")
-   <Revision kind=number 11>
+   <Revision kind=number 9>
    >>> client.write('totally/partly/extant_path/to_a_file', "foo")
-   <Revision kind=number 13>
+   <Revision kind=number 10>
    >>> client.write('totally/partly/extant/path/to_another_file', "foo")
-   <Revision kind=number 15>
+   <Revision kind=number 11>
    >>> client.write('a_file_at_the_root', "foobar")
-   <Revision kind=number 16>
+   <Revision kind=number 12>
    >>> client.write('one_level/deep', "foobar")
-   <Revision kind=number 17>
+   <Revision kind=number 13>
    >>> client.write('one_level/again', "foobar")
-   <Revision kind=number 18>
+   <Revision kind=number 14>
    >>> client.write('totally/nonexistent/path_to/a_file', "foobar")
-   <Revision kind=number 19>
+   <Revision kind=number 15>
    >>> client.write('totally/partly/extant_path/to_a_file', "foobar")
-   <Revision kind=number 20>
+   <Revision kind=number 16>
    >>> client.write('totally/partly/extant/path/to_another_file', "foobar")
-   <Revision kind=number 21>
+   <Revision kind=number 17>
 
-Sven tries to think of your repository-backed filesystem as basically
-stateless -- a sort of RESTful approach to versioning. Because of this,
-sven tries to make version conflicts just sort of melt away by always
-clobbering the repository's copy with the client's new copy:
+Let's make sure logs work for directories.
 
-   >>> subprocess.call(['svn', 'co', 'file://%s'%repo_dir, other_checkoutdir])
-   0
+   >>> client.last_changed_rev('totally')
+   17
 
-   >>> client2 = SvnAccess(other_checkoutdir)
-   >>> client.write('file', "version 1\n2\n3")
-   <Revision kind=number 22>
-   >>> client2.write('file', 'feeble feeblefeed')
-   <Revision kind=number 23>
-   >>> client.write('file', "version 1\n5\n3")
-   <Revision kind=number 24>
+   >>> client.last_changed_rev('totally', rev=17)
+   17
 
-   >>> client.read('file')['body']
-   'version 1\n5\n3\n'
+   >>> client.last_changed_rev('totally', rev=14)
+   11
 
-   client2.read('file')['body']
-   'feeble feeblefeed\n'
-
-Synchronization errors can still occur if you tell sven not to
-keep files up-to-date before writing, though:
-
-   >>> from sven.exc import ResourceChanged
-   >>> client2.write('file', 'moobly moo', update_before_write=False)
+   >>> client.log('totally', rev=1)
    Traceback (most recent call last):
    ...
-   ResourceChanged: Resource 'file' is out of date
-
-   >>> client.write('file', "version 1\n2\n3", update_before_write=False)
-   <Revision kind=number 25>
-
-So there are a couple of approaches possible here if you prefer to keep
-auto-updates off for performance reasons. One simple approach would be
-to assume that writes will succeed until proven otherwise, while retaining
-sven's natural inclination to clobber conflicting changesets, viz.:
-
-   >>> try:
-   ...     client2.write('file', 'booga booga boo', update_before_write=False)
-   ... except ResourceChanged:
-   ...     client2.write('file', 'booga booga boo', update_before_write=True)
-   <Revision kind=number 26>
-
+   NoSuchResource: [Errno 2] No such file or directory: 'totally'
