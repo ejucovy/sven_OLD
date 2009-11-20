@@ -1,3 +1,9 @@
+0.5
+===
+
+The 0.5 release does not exist. Sven went straight to 0.6 after 0.4.1
+with some backwards-incompatible changes.
+
 0.4.1 (2009-08-10)
 ==================
 

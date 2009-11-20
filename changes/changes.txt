@@ -4,3 +4,7 @@
 
 * The strange ad-hoc JSONish object returned by SvnAccess.ls had an
   extra `/` prefixed to the object's 'href' erroneously; now fixed.
+
+* Experimental implementation of the Sven API for Mercurial backends 
+  now lives in sven.hg.HgAccess; it is documented in hg-doctest.txt
+  and has a few small differences from the SvnAccess backend.
