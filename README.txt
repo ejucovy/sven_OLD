@@ -1,5 +1,9 @@
 It requires `pysvn` which you will probably want to install system-wide[1].
 
+Alternatively, you can use Sven with mercurial. This is highly experimental
+at present. Look at ./sven/hg-doctest.txt for details. Sven's hg interface
+is (mostly) the same as the svn interface.
+
 Basic usage:
 
     from sven.backend import SvnAccess
