@@ -4,7 +4,7 @@ Alternatively, you can use Sven with mercurial. This is highly experimental
 at present. Look at ./sven/hg-doctest.txt for details. Sven's hg interface
 is (mostly) the same as the svn interface.
 
-Basic usage:
+Basic usage::
 
     from sven.backend import SvnAccess
     client = SvnAccess(my_svn_server_repo_uri, my_local_checkout_dir)
@@ -45,4 +45,5 @@ can be run as a test suite by `python sven/backend.py`)
     incompatible (e.g. svn 1.5 with pysvn compiled against your earlier svn 1.4)
     If this happens, you should uninstall pysvn, then compile it from source.
     You might want to test for this upfront by running the test suite:
+
      python sven/backend.py
