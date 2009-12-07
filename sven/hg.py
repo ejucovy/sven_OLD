@@ -125,7 +125,7 @@ class HgAccess(object):
         ui = repo.ui
         ui.pushbuffer()
 
-        # first make sure the file exists at the given revision
+        # first check if a file exists at the given revision
         try:
             file = repo[rev][uri]
         except LookupError:  # it's a directory!
