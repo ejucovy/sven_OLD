@@ -54,6 +54,7 @@ class HgAccess(object):
         return dict(body=contents.read(), kind=None)
 
     def write(self, uri, contents, msg=None, kind=None):
+
         uri = uri.strip('/')
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
@@ -99,6 +100,7 @@ class HgAccess(object):
 
         out = ui.popbuffer()
 
+        rev = None
         for line in out.split('\n'):
             if line.startswith("committed changeset"):
                 rev = line[len("committed changeset "):]
@@ -110,6 +112,7 @@ class HgAccess(object):
                 self.rev = rev
             def __repr__(self):
                 return "<Revision kind=number %s>" % self.rev
+
         return Revision(rev)
 
     def last_changed_rev(self, uri, rev=None):
