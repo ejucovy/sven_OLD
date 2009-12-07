@@ -1,9 +1,12 @@
 import os
 from StringIO import StringIO
 
-from mercurial import commands as cmd, ui as UI, hg, util as hg_util, cmdutil
+from mercurial import util as hg_util, cmdutil
 
 from sven.exc import *
+
+from mercurial import hg
+import mercurial
 
 class HgAccess(object):
     def __init__(self, checkout_dir):
@@ -14,7 +17,7 @@ class HgAccess(object):
         return self._client(self.checkout_dir)
 
     def _client(self, path):
-        ui = UI.ui()
+        ui = mercurial.ui.ui()
         repo = hg.repository(ui, path)
         return repo
 
@@ -86,8 +89,8 @@ class HgAccess(object):
         else:
             root = absolute_uri
 
-        cmd.add(ui, repo, root)
-        cmd.commit(ui, repo, root, message=msg, logfile=None)
+        mercurial.commands.add(ui, repo, root)
+        mercurial.commands.commit(ui, repo, root, message=msg, logfile=None)
 
         out = ui.popbuffer()
 
@@ -136,7 +139,8 @@ class HgAccess(object):
             rev = ["%d:0" % rev]
 
         try:
-            cmd.log(ui, repo, absolute_uri, rev=rev, date=None, user=None)
+            mercurial.commands.log(ui, repo,
+                                   absolute_uri, rev=rev, date=None, user=None)
         except hg_util.Abort, e:
             if str(e).endswith("not under root"):
                 raise NoSuchResource(uri)
