@@ -3,9 +3,6 @@ import os
 import pysvn
 from sven.exc import *
 
-#def notify(event):
-    #import pdb; pdb.set_trace()
-
 class BaseSvnAccess(object):
     def __init__(self, checkout_dir,
                  config_location=None,
