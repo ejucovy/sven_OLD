@@ -171,9 +171,13 @@ class HgAccess(object):
 
         # here's where we want to get suspicious.
         # if there's no apparent log for any changes
-        # under the given uri, and there's no record of
+        # under the given uri, AND there's no record of
         # files under the uri in the changeset,
         # we're gonna say this just doesn't exist.
+        #
+        # note that i have no idea what it means to have 
+        # a "record of files under the uri in the changeset."
+        # i have literally no idea. but this seems to work.
         if not log_info:
             files = repo[raw_rev].files()
             files_in_this_path = [file for file in files
