@@ -7,6 +7,7 @@ from sven.exc import *
 
 from mercurial import hg
 import mercurial
+import mercurial.commands
 
 class HgAccess(object):
     def __init__(self, checkout_dir):
@@ -17,7 +18,8 @@ class HgAccess(object):
         return self._client(self.checkout_dir)
 
     def _client(self, path):
-        ui = mercurial.ui.ui()
+        ui = mercurial.ui.ui(interactive=False)
+        ui.verbose = False
         repo = hg.repository(ui, path)
         return repo
 
@@ -31,12 +33,12 @@ class HgAccess(object):
                 raise ResourceUnchanged(uri, last_change)
 
         repo = self.client
-        ui = repo.ui
         
         if rev is not None:
             rev = str(rev)
 
         ctx = repo[rev]
+        
         contents = StringIO()
 
         try:
@@ -76,6 +78,9 @@ class HgAccess(object):
         f.close()
 
         repo = self.client
+
+        # we need to turn up verbosity so we can inspect the output
+        # and find the commit, which is totally lame but sort of works
         ui = repo.ui
         ui.verbose = True
 
