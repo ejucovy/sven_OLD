@@ -95,6 +95,9 @@ class HgAccess(object):
         else:
             root = absolute_uri
 
+        # mercurial will sometimes explode if handed unicode paths
+        root = str(root)
+
         mercurial.commands.add(ui, repo, root)
         mercurial.commands.commit(ui, repo, root, message=msg, logfile=None)
 
