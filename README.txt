@@ -47,3 +47,5 @@ can be run as a test suite by `python sven/backend.py`)
     You might want to test for this upfront by running the test suite:
 
      python sven/backend.py
+
+Follow sven on github: <http://github.com/ejucovy/sven>
