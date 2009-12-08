@@ -99,7 +99,7 @@ class HgAccess(object):
         root = str(root)
 
         mercurial.commands.add(ui, repo, root)
-        mercurial.commands.commit(ui, repo, root, message=msg, logfile=None)
+        mercurial.commands.commit(ui, repo, root, message=msg, logfile=None, user=None, date=None)
 
         out = ui.popbuffer()
 
