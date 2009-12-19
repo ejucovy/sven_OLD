@@ -7,7 +7,7 @@ is (mostly) the same as the svn interface.
 Basic usage::
 
     from sven.backend import SvnAccess
-    client = SvnAccess(my_svn_server_repo_uri, my_local_checkout_dir)
+    client = SvnAccess(my_local_checkout_dir)
     
     client.write('path/to/a/file/to/write', "Lovely content to be versioning!")
     client.write('path/to/another/file', "Aw shucks, I'll version this too..",
