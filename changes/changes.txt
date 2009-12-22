@@ -1,13 +1,9 @@
-* SvnBackend.__init__ no longer takes a 'svnuri' argument to the
-  remote repository as its first positional argument; it's not
-  used anywhere. This is a backwards-incompatible change.
 
-* The strange ad-hoc JSONish object returned by SvnAccess.ls had an
-  extra `/` prefixed to the object's 'href' erroneously; now fixed.
+ * Refactored path normalization in SVN backend classes and added
+   optional `path_fixer` callable argument to constructor.
 
-* Experimental implementation of the Sven API for Mercurial backends 
-  now lives in sven.hg.HgAccess; it is documented in hg-doctest.txt
-  and has a few small differences from the SvnAccess backend. It is
-  highly incomplete (think of it as an alpha stage) and requires
-  `mercurial` to be installed. Sven does not install mercurial, just
-  like it doesn't install pysvn.
+   If provided, `path_fixer` should expect to be called with a
+   string URI as the only argument. It should return a string URI.
+   It can be used to define filesystem layout policies, like
+   "always store files prefixed under a date hierarchy" or "add a
+   file extension."

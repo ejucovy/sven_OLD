@@ -6,7 +6,8 @@ from sven.exc import *
 class BaseSvnAccess(object):
     def __init__(self, checkout_dir,
                  config_location=None,
-                 default_commit_message=None):
+                 default_commit_message=None,
+                 path_fixer=None):
 
         if config_location and not config_location.startswith('/'):
             config_location = os.path.join(checkout_dir, config_location)
@@ -21,6 +22,23 @@ class BaseSvnAccess(object):
 
         self.default_message = default_commit_message or "foom"
 
+        self.path_fixer = path_fixer
+
+    def normalized(self, path):
+        """
+        normalizes a path
+
+        >>> normalized('/my/path/') == normalized('my/path') == 'my/path'
+        True
+
+        optionally a `path_fixer` may be applied, if set on the class. 
+        the path will still be guaranteed to have no leading or trailing slashes.
+        """
+        path = path.strip('/')
+        if self.path_fixer:
+            path = self.path_fixer(path)
+        return path.strip('/')
+
     @property
     def client(self):
         client = pysvn.Client(self.config_location)
@@ -31,7 +49,7 @@ class BaseSvnAccess(object):
         return client
 
     def last_changed_rev(self, uri, rev=None):
-        uri = uri.strip('/')
+        uri = self.normalized(uri)
         
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
@@ -86,7 +104,7 @@ class BaseSvnAccess(object):
 
         move_revision = None
         for problem in problems:
-            base_moved_path = '/'.join((repo_url.rstrip('/'), problem['path'].strip('/')))
+            base_moved_path = '/'.join((repo_url.rstrip('/'), self.normalized(problem['path']) ))
             assert doc_url.startswith(base_moved_path), "I don't know what this means!\nPlease let me know the circumstances of this error if you hit it: ejucovy+sven@gmail.com"
             move_revision = problem.copyfrom_revision.number
 
@@ -109,7 +127,7 @@ class BaseSvnAccess(object):
                a file at a revision when it did not yet exist, or a revision
                when it moved or ceased to exist.
         """
-        uri = uri.strip('/')
+        uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         index_template = """<html><head><title></title></head>
@@ -150,7 +168,7 @@ class BaseSvnAccess(object):
         etc.
         """
 
-        uri = uri.strip('/')
+        uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         # if uri evals to false we're at the repo root
@@ -190,7 +208,7 @@ class BaseSvnAccess(object):
         etc.
         """
 
-        uri = uri.strip('/')
+        uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         if rev is not None:
@@ -228,7 +246,7 @@ class BaseSvnAccess(object):
         return globs
 
     def kind(self, uri):
-        uri = uri.strip('/')
+        uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         try:
@@ -246,7 +264,7 @@ class BaseSvnAccess(object):
 
     def set_kind(self, uri, kind, msg=None):
 
-        uri = uri.strip('/')
+        uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         self.client.propset('svn:mime-type', kind, absolute_uri)
@@ -259,7 +277,7 @@ class BaseSvnAccess(object):
         
     def write(self, uri, contents, msg=None, kind=None):
 
-        uri = uri.strip('/')
+        uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         if os.path.isdir(absolute_uri): # we can't write to a directory
@@ -332,7 +350,7 @@ class SvnAccessWriteUpdateHandler(BaseSvnAccess):
     def set_kind(self, uri, kind, msg=None,
                  update_before_write=True,
                  update_after_write=True):
-        uri = uri.strip('/')
+        uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         if update_before_write:
@@ -346,7 +364,7 @@ class SvnAccessWriteUpdateHandler(BaseSvnAccess):
     def write(self, uri, contents, msg=None, kind=None,
               update_before_write=True,
               update_after_write=True):
-        uri = uri.strip('/')
+        uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         if update_before_write:
@@ -361,6 +379,7 @@ class SvnAccessWriteUpdateHandler(BaseSvnAccess):
 
 #bbb
 #deprecate in 0.5
+# XXX????
 SvnAccess = SvnAccessWriteUpdateHandler
 
 class SvnAccessEventEmitter(SvnAccess):
@@ -373,7 +392,7 @@ class SvnAccessEventEmitter(SvnAccess):
 
     def set_kind(self, uri, kind, msg=None):
 
-        uri = uri.strip('/')
+        uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         pre_rev = self.client.info2(absolute_uri)[0][1].rev
@@ -384,7 +403,7 @@ class SvnAccessEventEmitter(SvnAccess):
 
     def write(self, uri, contents, msg=None, kind=None):
 
-        uri = uri.strip('/')
+        uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         pre_rev = self.client.info2(absolute_uri)[0][1].rev
