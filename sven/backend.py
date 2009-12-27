@@ -59,9 +59,10 @@ class BaseSvnAccess(object):
         except pysvn.ClientError, e:
             if e[1][0][1] == 155007: # not a working copy
                 raise NoSuchResource(uri)
-            raise                
+            if e[1][0][1] == 160013: # file not found
+                raise NoSuchResource(uri)
+            raise
             
-
         if rev is not None:
             rev = pysvn.Revision(pysvn.opt_revision_kind.number, rev)
             try:
