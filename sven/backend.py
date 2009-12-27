@@ -61,6 +61,8 @@ class BaseSvnAccess(object):
                 raise NoSuchResource(uri)
             if e[1][0][1] == 160013: # file not found
                 raise NoSuchResource(uri)
+            if e[1][0][1] == 150000: # not under version control
+                raise NoSuchResource(uri)
             raise
             
         if rev is not None:
