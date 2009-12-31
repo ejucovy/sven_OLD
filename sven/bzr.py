@@ -68,86 +68,32 @@ class BzrAccess(object):
         ids = x.branch.repository.all_revision_ids()        
         x.branch.lock_read()
         try:
-            changes = branch.repository.fileids_altered_by_revision_ids(ids)
+            changes = x.branch.repository.fileids_altered_by_revision_ids(ids)
         finally:
             x.branch.unlock()
 
         if path not in changes:
             return None
 
-        changes = changes[path]
-        changes = reversed([x.branch.revision_id_to_revno(a) for a in changes])
+        changes = reversed(list(changes[path]))
+        changes = [x.branch.revision_id_to_revno(a) for a in changes]
         return changes
 
     def last_changed_rev(self, uri, rev=None):
         uri = self.normalized(uri)
+
+        changes = self.revisions(uri)
+
+        if not changes:
+            return None
+
+        if rev is None:
+            return changes[0]
         
-        absolute_uri = '/'.join((self.checkout_dir, uri))
-
-        try:
-            log = self.client.log(absolute_uri,
-                                  discover_changed_paths=True)
-        except pysvn.ClientError, e:
-            if e[1][0][1] == 155007: # not a working copy
-                raise NoSuchResource(uri)
-            if e[1][0][1] == 160013: # file not found
-                raise NoSuchResource(uri)
-            if e[1][0][1] == 150000: # not under version control
-                raise NoSuchResource(uri)
-            raise
-            
-        if rev is not None:
-            rev = pysvn.Revision(pysvn.opt_revision_kind.number, rev)
-            try:
-                info = self.client.info2(absolute_uri, rev)
-            except pysvn.ClientError, e:
-                if e[1][0][1] == 150004: # has no URL
-                    raise NoSuchResource(uri)
-                if e[1][0][1] == 155007: # not a working copy
-                    raise NoSuchResource(uri)
-                raise                
-        else:
-            try:
-                info = self.client.info2(absolute_uri)
-            except pysvn.ClientError, e:
-                if e[1][0][1] == 200005: # not under version control
-                    raise NoSuchResource(uri)
-                if e[1][0][1] == 150000: # not under version control
-                    raise NoSuchResource(uri)
-                if e[1][0][1] == 155007: # not a working copy
-                    raise NoSuchResource(uri)
-                raise
-
-        last_change = info[0][1].last_changed_rev.number
-        
-
-        ##### in case the file's parent directory was moved more recently than the file was changed
-        # this is particularly tricky if the sven client is "mounted" at a child directory of the moved path
-        # e.g. 
-        # touch /foo/bar/baz.txt
-        # x = SvnAccess('/foo/bar/')
-        # svn mv /foo /fleem
-        # x.info('baz.txt')
-
-        log = self.client.log(absolute_uri, discover_changed_paths=True)
-        problems = [x for x in log[0]['changed_paths']
-                    if x['copyfrom_path']]
-
-        repo_url = info[0][1]['repos_root_URL']
-        doc_url = info[0][1]['URL']
-
-        move_revision = None
-        for problem in problems:
-            base_moved_path = '/'.join((repo_url.rstrip('/'), self.normalized(problem['path']) ))
-            assert doc_url.startswith(base_moved_path), "I don't know what this means!\nPlease let me know the circumstances of this error if you hit it: ejucovy+sven@gmail.com"
-            move_revision = problem.copyfrom_revision.number
-
-        if move_revision:
-            if last_change > move_revision:
-                return last_change
-            return move_revision +1 # +1 is the oldest revision at which the file exists at its current location.
-
-        return last_change
+        for revno in changes:
+            if rev < revno:
+                continue
+            return revno
 
     def read(self, uri, rev=None):
         """
@@ -380,71 +326,6 @@ class BzrAccess(object):
 
 
 
-class SvnAccessWriteUpdateHandler(BaseSvnAccess):
-    def set_kind(self, uri, kind, msg=None,
-                 update_before_write=True,
-                 update_after_write=True):
-        uri = self.normalized(uri)
-        absolute_uri = '/'.join((self.checkout_dir, uri))
-
-        if update_before_write:
-            self.client.update(self.checkout_dir)
-
-        BaseSvnAccess.set_kind(self, uri, kind, msg)
-
-        if update_after_write:
-            self.client.update(self.checkout_dir)
-
-    def write(self, uri, contents, msg=None, kind=None,
-              update_before_write=True,
-              update_after_write=True):
-        uri = self.normalized(uri)
-        absolute_uri = '/'.join((self.checkout_dir, uri))
-
-        if update_before_write:
-            self.client.update(self.checkout_dir)
-
-        result = BaseSvnAccess.write(self, uri, contents, msg, kind)
-
-        if update_after_write:
-            self.client.update(self.checkout_dir)
-
-        return result
-
-#bbb
-#deprecate in 0.5
-# XXX????
-SvnAccess = SvnAccessWriteUpdateHandler
-
-class SvnAccessEventEmitter(SvnAccess):
-    def __init__(self, *args, **kw):
-        SvnAccess.__init__(self, *args, **kw)
-        self.listeners = []
-
-    def add_listener(self, callback):
-        self.listeners.append(callback)
-
-    def set_kind(self, uri, kind, msg=None):
-
-        uri = self.normalized(uri)
-        absolute_uri = '/'.join((self.checkout_dir, uri))
-
-        pre_rev = self.client.info2(absolute_uri)[0][1].rev
-        post_rev = SvnAccess.set_kind(self, uri, kind, msg)
-
-        for callback in self.listeners:
-            callback(absolute_uri, contents, msg, kind, (pre_rev, post_rev))
-
-    def write(self, uri, contents, msg=None, kind=None):
-
-        uri = self.normalized(uri)
-        absolute_uri = '/'.join((self.checkout_dir, uri))
-
-        pre_rev = self.client.info2(absolute_uri)[0][1].rev
-        post_rev = SvnAccess.write(self, uri, contents, msg, kind)
-        for callback in self.listeners:
-            callback(uri, contents, msg, kind, (pre_rev, post_rev))
-
 if __name__ == '__main__':
     import doctest
-    doctest.testfile('doctest.txt')
+    doctest.testfile('bzr.txt')
