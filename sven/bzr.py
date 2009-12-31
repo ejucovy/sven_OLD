@@ -10,6 +10,7 @@ from sven.exc import *
 
 # x = BzrAccess('bar').client
 
+# much help from http://code.google.com/p/django-rcsfield/source/browse/trunk/rcsfield/backends/bzr.py
 
 class BzrAccess(object):
     def __init__(self, checkout_dir,
