@@ -1,6 +1,7 @@
 from operator import attrgetter
 import os
 from bzrlib import workingtree
+from bzrlib.inventory import InventoryDirectory
 from sven.exc import *
 
 # >>> x=workingtree.WorkingTree.open('bar')
@@ -146,37 +147,28 @@ class BzrAccess(object):
         @raise:ResourceUnchanged
         etc.
         """
+                
+        x = self.client
 
         uri = self.normalized(uri)
-        absolute_uri = '/'.join((self.checkout_dir, uri))
-
-        # if uri evals to false we're at the repo root
-        if uri and not os.path.isdir(absolute_uri):
-            raise NotADirectory(uri)
 
         if rev is not None:
-            last_change = self.last_changed_rev(uri, rev)
-            if last_change < int(rev):
-                raise ResourceUnchanged(uri, last_change)
+            rev_id = x.branch.get_rev_id(int(rev))
+            x = x.branch.repository.revision_tree(rev_id)
 
-            rev = pysvn.Revision(pysvn.opt_revision_kind.number, rev)
-            contents = self.client.ls(absolute_uri, rev)
-        else:
-            contents = self.client.ls(absolute_uri)
+        x.lock_read()
+        try:
+            inv = x.inventory
+        finally:
+            x.unlock()
 
-        contents.sort(key=attrgetter('name'))
-        globs = []
-        for obj in contents:
-            obj_name = obj.name
-            if obj_name.startswith(self.checkout_dir):
-                obj_name = obj_name[len(self.checkout_dir):]
-            glob = dict(href='%s' % obj_name)
-            fields = {'id': obj_name}
-            if rev is not None:
-                fields['version'] = rev.number
-            glob['fields'] = fields
-            globs.append(glob)
-        return globs
+        path = x.path2id(uri)
+        dir = inv[path]
+
+        if type(dir) is not InventoryDirectory:
+            raise NotADirectory(uri)
+
+        return ["%s/%s" % (uri, key) for key in dir.children.keys()]
 
     def log(self, uri, rev=None):
         """
