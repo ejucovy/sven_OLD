@@ -168,6 +168,11 @@ class BzrAccess(object):
         if type(dir) is not InventoryDirectory:
             raise NotADirectory(uri)
 
+        if rev is not None:
+            last_change = self.last_changed_rev(uri, rev=rev)
+            if last_change < rev:
+                return ResourceUnchanged(uri, last_change)
+
         return ["%s/%s" % (uri, key) for key in dir.children.keys()]
 
     def log(self, uri, rev=None):
