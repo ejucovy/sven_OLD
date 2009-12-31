@@ -75,9 +75,9 @@ class BzrAccess(object):
         if path not in changes:
             return None
 
-        changes = reversed(list(changes[path]))
+        changes = changes[path]
         changes = [x.branch.revision_id_to_revno(a) for a in changes]
-        return changes
+        return list(sorted(changes, reverse=True))
 
     def last_changed_rev(self, uri, rev=None):
         uri = self.normalized(uri)
@@ -126,10 +126,14 @@ class BzrAccess(object):
 
         x.lock_read()
         try:
-            data = x.get_file(path).read()
+            data = x.get_file(path)
+        except IOError, e:
+            if e.errno == 21:
+                raise NotAFile(uri)
         finally:
             x.unlock()
 
+        data = data.read()
         return data
 
 
