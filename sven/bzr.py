@@ -108,35 +108,30 @@ class BzrAccess(object):
                when it moved or ceased to exist.
         """
         uri = self.normalized(uri)
-        absolute_uri = '/'.join((self.checkout_dir, uri))
+                
+        x = self.client
 
-        index_template = """<html><head><title></title></head>
-<body><div id='content'><ul>%s</ul></div></body></html>"""
         if rev is not None:
-            last_change = self.last_changed_rev(uri, rev)
-            if last_change < int(rev):
-                raise ResourceUnchanged(uri, last_change)
+            rev_id = x.branch.get_rev_id(int(rev))
+            x = x.branch.repository.revision_tree(rev_id)
 
-            rev = pysvn.Revision(pysvn.opt_revision_kind.number, rev)
-            try:
-                return {'body': self.client.cat(absolute_uri, rev),
-                        'kind': self.kind(uri),
-                        }
-            except pysvn.ClientError, e:
-                if e[1][0][1] == 195007: # URL refers to a directory
-                    raise NotAFile(uri)
-                raise
+        path = x.path2id(uri)
+        if not path:
+            return None
 
+        if rev is not None:
+            last_change = self.last_changed_rev(uri, rev=rev)
+            if last_change < rev:
+                return ResourceUnchanged(uri, last_change)
+
+        x.lock_read()
         try:
-            return {'body': file(absolute_uri).read(),
-                    'kind': self.kind(uri),
-                    }
-        except IOError, e:
-            if e.errno == 21:
-                raise NotAFile(uri)
-            elif e.errno == 2:
-                raise NoSuchResource(uri)
-            raise
+            data = x.get_file(path).read()
+        finally:
+            x.unlock()
+
+        return data
+
 
     def ls(self, uri, rev=None):
         """
