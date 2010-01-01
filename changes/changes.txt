@@ -7,3 +7,25 @@
    It can be used to define filesystem layout policies, like
    "always store files prefixed under a date hierarchy" or "add a
    file extension."
+
+ * Added bazaar backend and tests; unlike the mercurial backend,
+   I understand it, so this ought to be stable.
+
+ * Implemented custom resource properties for bazaar backend,
+   because it doesn't have any concept like `svn propget/propset`.
+
+   Resource properties are implemented as independently versioned
+   files. File and directory properties live in separate locations,
+   because that seemed easier and more logical somehow.
+
+   For a file '/foo/bar/baz.txt' its 'mimetype' property lives at
+   '/.sven-meta/.mimetype/foo/bar/baz.txt' and its 'fleem' property
+   lives at '/.sven-meta/.fleem/foo/bar/baz.txt'.
+
+   For a directory '/foo/bar/' its 'mimetype' property lives at
+   '/foo/bar/.sven-meta/.mimetype' and its 'fleem' property lives
+   at '/foo/bar/.sven-meta/.fleem'.
+
+   For normal files read and written directly by the user, sven
+   appends a newline to the end of the file. For these files, sven
+   does not append a newline to the end of the file.
