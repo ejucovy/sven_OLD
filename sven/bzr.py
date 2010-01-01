@@ -1,6 +1,7 @@
 from operator import attrgetter
 import os
 from bzrlib import workingtree
+from bzrlib.errors import NoSuchRevision
 from bzrlib.inventory import InventoryDirectory
 from sven.exc import *
 
@@ -64,7 +65,7 @@ class BzrAccess(object):
 
         path = x.path2id(uri)
         if not path:
-            return None
+            raise NoSuchResource(uri)
 
         ids = x.branch.repository.all_revision_ids()        
         x.branch.lock_read()
@@ -112,18 +113,21 @@ class BzrAccess(object):
                 
         x = self.client
 
-        if rev is not None:
-            rev_id = x.branch.get_rev_id(int(rev))
+        if rev is not None:            
+            try:
+                rev_id = x.branch.get_rev_id(int(rev))
+            except NoSuchRevision, e:
+                raise NoSuchResource(uri)
             x = x.branch.repository.revision_tree(rev_id)
 
         path = x.path2id(uri)
         if not path:
-            return None
+            raise NoSuchResource(uri)
 
         if rev is not None:
             last_change = self.last_changed_rev(uri, rev=rev)
             if last_change < rev:
-                return ResourceUnchanged(uri, last_change)
+                raise ResourceUnchanged(uri, last_change)
 
         x.lock_read()
         try:
@@ -135,7 +139,7 @@ class BzrAccess(object):
             x.unlock()
 
         data = data.read()
-        return data
+        return dict(body=data, kind=None)
 
 
     def ls(self, uri, rev=None):
@@ -171,7 +175,7 @@ class BzrAccess(object):
         if rev is not None:
             last_change = self.last_changed_rev(uri, rev=rev)
             if last_change < rev:
-                return ResourceUnchanged(uri, last_change)
+                raise ResourceUnchanged(uri, last_change)
 
         return ["%s/%s" % (uri, key) for key in dir.children.keys()]
 
@@ -259,68 +263,35 @@ class BzrAccess(object):
         if os.path.isdir(absolute_uri): # we can't write to a directory
             raise NotAFile(uri)
 
-        parent_dir = '/'.join(uri.split('/')[:-1])
+        parent_dir = os.path.dirname(uri)
         absolute_parent_dir = '/'.join((self.checkout_dir, parent_dir))
 
-        if parent_dir and not os.path.exists(absolute_parent_dir):
-            path = '/'.join(uri.split('/')[:-1])
-            os.makedirs('/'.join((self.checkout_dir, path)))
+        x = self.client
 
-            path = path.split('/')
-            success = False
-            for i in range(len(path)):
-                root_to_add = '/'.join(path[:i+1])
-                try: 
-                    self.client.add('/'.join((self.checkout_dir, root_to_add)))
-                    success = True
-                except pysvn.ClientError, e: #XXX TODO: typecheck this error
-                    if not success:
-                        # the resource is already under version control
-                        # but not because we just added it. keep walking
-                        # up the chain to find something that isn't yet
-                        # under version control.
-                        continue
-                    
-                    # the resource is already under version control
-                    # because we just added its parent directory.
-                    # walk one step down the chain to get back to the
-                    # root directory that we just added.
-                    root_to_add = '/'.join(path[:i])
-                    break
-            self.client.checkin(['/'.join((self.checkout_dir, root_to_add))],
-                                "auto-creating directories")
-            path_to_update = '/'.join([self.checkout_dir] + path)
-            self.client.update(path_to_update)
+        if parent_dir and not os.path.exists(absolute_parent_dir):
+            os.makedirs(absolute_parent_dir)
+            x.smart_add([absolute_parent_dir])
+            x.commit("Auto-creating directories")
 
         f = file(absolute_uri, 'w')
         print >> f, contents
         f.close()
-        try:
-            self.client.add(absolute_uri)
-        except pysvn.ClientError, e:
-            if e[1][0][1] == 150002: # already under version control
-                pass
-            else: # i don't know what else this would be! better not make any decisions!
-                raise
+
+        x.add([uri])
 
         if not msg: # wish we could just do `if msg is None`, but we can't.
             msg = self.default_message
 
-        if kind:
-            self.client.propset('svn:mime-type', kind, absolute_uri)
+        rev_id = x.commit(message=msg)
 
-        try:
-            commit_rev = self.client.checkin([absolute_uri], msg)
-            return commit_rev
-        except pysvn.ClientError, e:
-            if e[1][0][1] == 160028: # file is out of date
-                # we roll back our attempted changes and let the caller deal with merges
-                self.client.revert(absolute_uri)
-                raise ResourceChanged(uri)
-            else: # i don't know what else this would be! better not make any decisions!
-                raise
+        return R(x.branch.revision_id_to_revno(rev_id))
 
-
+class Revision(object):
+    def __init__(self, n):
+        self.n = n
+    def __repr__(self):
+        return "<Revision kind=number %d>" % self.n
+R = Revision
 
 if __name__ == '__main__':
     import doctest
