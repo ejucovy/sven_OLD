@@ -1,7 +1,7 @@
 from operator import attrgetter
 import os
 from bzrlib import workingtree
-from bzrlib.errors import NoSuchRevision
+from bzrlib.errors import NoSuchRevision, BoundBranchOutOfDate, ConflictsInTree
 from bzrlib.inventory import InventoryDirectory
 from sven.exc import *
 
@@ -282,9 +282,35 @@ class BzrAccess(object):
         if not msg: # wish we could just do `if msg is None`, but we can't.
             msg = self.default_message
 
-        rev_id = x.commit(message=msg)
+        try:
+            rev_id = x.commit(message=msg)
+        except (BoundBranchOutOfDate, ConflictsInTree), e:
+            raise ResourceChanged(uri)
 
         return R(x.branch.revision_id_to_revno(rev_id))
+
+class UpdatingBzrAccess(BzrAccess):
+    def __init__(self, checkout_dir, config_location=None,
+                 default_commit_message=None, path_fixer=None,
+                 update_before_write=True, update_after_write=True):
+        BzrAccess.__init__(self, checkout_dir, config_location,
+                           default_commit_message, path_fixer)
+        self.update_before_write = update_before_write
+        self.update_after_write = update_after_write
+
+    def write(self, *args, **kw):
+        override = kw.get('update_before_write', None)
+        if override is not None:
+            before_write = override
+            del kw['update_before_write']
+        else:
+            before_write = self.update_before_write
+        if before_write:
+            self.client.update()
+        res = BzrAccess.write(self, *args, **kw)
+        if self.update_after_write:
+            self.client.update()
+        return res
 
 class Revision(object):
     def __init__(self, n):

@@ -15,8 +15,8 @@ there's a central repository, so that's what we'll test here.)
 
 Instantiate an object that knows about your local checkout directory:
 
-   >>> from sven.bzr import BzrAccess
-   >>> client = BzrAccess(checkout_dir)
+   >>> from sven.bzr import BzrAccess, UpdatingBzrAccess
+   >>> client = UpdatingBzrAccess(checkout_dir)
 
 Sven throws its own flavors of IOErrors to deal with various edge cases of
 interacting with the repository. For instance, trying to get metadata on
@@ -173,7 +173,7 @@ clobbering the repository's copy with the client's new copy:
    >>> subprocess.call(['bzr', 'co', 'file://%s'%repo_dir, other_checkoutdir])
    0
 
-   >>> client2 = BzrAccess(other_checkoutdir)
+   >>> client2 = UpdatingBzrAccess(other_checkoutdir)
    >>> client.write('file', "version 1\n2\n3")
    <Revision kind=number 22>
    >>> client2.write('file', 'feeble feeblefeed')
@@ -206,7 +206,7 @@ sven's natural inclination to clobber conflicting changesets, viz.:
 
    >>> try:
    ...     client2.write('file', 'booga booga boo', update_before_write=False)
-   ... except ResourceChanged:
+   ... except:
    ...     client2.write('file', 'booga booga boo', update_before_write=True)
    <Revision kind=number 26>
 
