@@ -139,7 +139,9 @@ class BzrAccess(object):
             x.unlock()
 
         data = data.read()
-        return dict(body=data, kind=None)
+
+        kind = self.kind(uri)
+        return dict(body=data, kind=kind)
 
 
     def ls(self, uri, rev=None):
@@ -229,33 +231,53 @@ class BzrAccess(object):
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
+        if os.path.isdir(absolute_uri):
+            return self._dir_mimetype(uri)
+        return self._file_mimetype(uri)
+
+    def _dir_mimetype(self, uri):
+        uri = self.normalized(uri)
+        absolute_props_uri = '/'.join((self.checkout_dir, uri, '.sven-meta'))
+
+        if not os.path.isdir(absolute_props_uri):
+            return None
+        res = self.read('/'.join((uri, '.sven-meta', '.mimetype')))
+        if res: return res['body']
+        return res
+
+    def _file_mimetype(self, uri):
+        uri = self.normalized(uri)
+        props_uri = '/'.join((
+                '.sven-meta/.mimetype', uri))
+        
         try:
-            properties = self.client.propget('svn:mime-type', absolute_uri)
-        except pysvn.ClientError, e:
-            if e[1][0][1] == 150000: # not under version control
-                return ""
-            if e[1][0][1] == 200005: # not under version control
-                return ""
-            if e[1][0][1] == 155007: # not a working copy
-                return ""
-            raise
-    
-        return properties.get(absolute_uri)
+            res = self.read(props_uri)
+        except NoSuchResource, e:
+            return None
+        if res: return res['body']
+        return res
 
+    def _dir_mimetype_set(self, uri, mimetype, msg=None):
+        uri = self.normalized(uri)
+
+        return self.write('/'.join((uri, '.sven-meta/.mimetype')),
+                          mimetype, use_newline=False)
+
+    def _file_mimetype_set(self, uri, mimetype, msg=None):
+        uri = self.normalized(uri)
+
+        return self.write('/'.join(('.sven-meta/.mimetype', uri)),
+                          mimetype, use_newline=False)
+        
     def set_kind(self, uri, kind, msg=None):
-
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
-        self.client.propset('svn:mime-type', kind, absolute_uri)
+        if os.path.isdir(absolute_uri):
+            return self._dir_mimetype_set(uri, kind, msg=msg)
+        return self._file_mimetype_set(uri, kind, msg=msg)
         
-        if not msg:
-            msg = "Set svn:mime-type property to '%s'" % kind
-        commit_rev = self.client.checkin([absolute_uri], msg)
-
-        return commit_rev
-        
-    def write(self, uri, contents, msg=None, kind=None):
+    def write(self, uri, contents, msg=None, kind=None, use_newline=True):
 
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
@@ -274,7 +296,10 @@ class BzrAccess(object):
             x.commit("Auto-creating directories")
 
         f = file(absolute_uri, 'w')
-        print >> f, contents
+        if use_newline:
+            print >> f, contents
+        else:
+            f.write(contents)
         f.close()
 
         x.add([uri])
@@ -286,6 +311,9 @@ class BzrAccess(object):
             rev_id = x.commit(message=msg)
         except (BoundBranchOutOfDate, ConflictsInTree), e:
             raise ResourceChanged(uri)
+
+        if kind is not None:
+            self.set_kind(uri, kind, msg=msg)
 
         return R(x.branch.revision_id_to_revno(rev_id))
 

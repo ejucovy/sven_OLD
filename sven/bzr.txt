@@ -141,29 +141,29 @@ Great work!
 This is actually tricky -- so let's exercise it in a couple of cases:
 
    >>> client.write('a_file_at_the_root', "foo")
-   <Revision kind=number 6>
-   >>> client.write('one_level/deep', "foo")
    <Revision kind=number 8>
+   >>> client.write('one_level/deep', "foo")
+   <Revision kind=number 10>
    >>> client.write('one_level/again', "foo")
-   <Revision kind=number 9>
-   >>> client.write('totally/nonexistent/path_to/a_file', "foo")
    <Revision kind=number 11>
-   >>> client.write('totally/partly/extant_path/to_a_file', "foo")
+   >>> client.write('totally/nonexistent/path_to/a_file', "foo")
    <Revision kind=number 13>
-   >>> client.write('totally/partly/extant/path/to_another_file', "foo")
+   >>> client.write('totally/partly/extant_path/to_a_file', "foo")
    <Revision kind=number 15>
-   >>> client.write('a_file_at_the_root', "foobar")
-   <Revision kind=number 16>
-   >>> client.write('one_level/deep', "foobar")
+   >>> client.write('totally/partly/extant/path/to_another_file', "foo")
    <Revision kind=number 17>
-   >>> client.write('one_level/again', "foobar")
+   >>> client.write('a_file_at_the_root', "foobar")
    <Revision kind=number 18>
-   >>> client.write('totally/nonexistent/path_to/a_file', "foobar")
+   >>> client.write('one_level/deep', "foobar")
    <Revision kind=number 19>
-   >>> client.write('totally/partly/extant_path/to_a_file', "foobar")
+   >>> client.write('one_level/again', "foobar")
    <Revision kind=number 20>
-   >>> client.write('totally/partly/extant/path/to_another_file', "foobar")
+   >>> client.write('totally/nonexistent/path_to/a_file', "foobar")
    <Revision kind=number 21>
+   >>> client.write('totally/partly/extant_path/to_a_file', "foobar")
+   <Revision kind=number 22>
+   >>> client.write('totally/partly/extant/path/to_another_file', "foobar")
+   <Revision kind=number 23>
 
 Sven tries to think of your repository-backed filesystem as basically
 stateless -- a sort of RESTful approach to versioning. Because of this,
@@ -175,11 +175,11 @@ clobbering the repository's copy with the client's new copy:
 
    >>> client2 = UpdatingBzrAccess(other_checkoutdir)
    >>> client.write('file', "version 1\n2\n3")
-   <Revision kind=number 22>
-   >>> client2.write('file', 'feeble feeblefeed')
-   <Revision kind=number 23>
-   >>> client.write('file', "version 1\n5\n3")
    <Revision kind=number 24>
+   >>> client2.write('file', 'feeble feeblefeed')
+   <Revision kind=number 25>
+   >>> client.write('file', "version 1\n5\n3")
+   <Revision kind=number 26>
 
    >>> client.read('file')['body']
    'version 1\n5\n3\n'
@@ -197,7 +197,7 @@ keep files up-to-date before writing, though:
    ResourceChanged: Resource 'file' is out of date
 
    >>> client.write('file', "version 1\n2\n3", update_before_write=False)
-   <Revision kind=number 25>
+   <Revision kind=number 27>
 
 So there are a couple of approaches possible here if you prefer to keep
 auto-updates off for performance reasons. One simple approach would be
@@ -208,5 +208,5 @@ sven's natural inclination to clobber conflicting changesets, viz.:
    ...     client2.write('file', 'booga booga boo', update_before_write=False)
    ... except:
    ...     client2.write('file', 'booga booga boo', update_before_write=True)
-   <Revision kind=number 26>
+   <Revision kind=number 28>
 
