@@ -113,6 +113,9 @@ class BzrAccess(object):
                 
         x = self.client
 
+        if rev is not None:
+            rev = int(rev)
+
         if rev is not None:            
             try:
                 rev_id = x.branch.get_rev_id(int(rev))
@@ -189,6 +192,8 @@ class BzrAccess(object):
         @raise:ResourceUnchanged
         etc.
         """
+
+        return []
 
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
