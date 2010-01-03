@@ -182,7 +182,17 @@ class BzrAccess(object):
             if last_change < rev:
                 raise ResourceUnchanged(uri, last_change)
 
-        return ["%s/%s" % (uri, key) for key in dir.children.keys()]
+        contents = ["%s/%s" % (uri, key) for key in dir.children.keys()]
+
+        globs = []
+        for obj in contents:
+            glob = dict(href=obj)
+            fields = {'id': obj}
+            if rev is not None:
+                fields['version'] = rev
+            glob['fields'] = fields
+            globs.append(glob)
+        return globs
 
     def log(self, uri, rev=None):
         """
@@ -242,6 +252,10 @@ class BzrAccess(object):
 
     def _dir_mimetype(self, uri):
         uri = self.normalized(uri)
+
+        if not uri:
+            return None
+
         absolute_props_uri = '/'.join((self.checkout_dir, uri, '.sven-meta'))
 
         if not os.path.isdir(absolute_props_uri):
@@ -255,6 +269,9 @@ class BzrAccess(object):
         props_uri = '/'.join((
                 '.sven-meta/.mimetype', uri))
         
+        if not uri:
+            raise RuntimeError("Can't do that")
+
         try:
             res = self.read(props_uri)
         except NoSuchResource, e:
