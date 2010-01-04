@@ -62,33 +62,46 @@ class BzrAccess(object):
         uri = self.normalized(uri)
 
         x = self.client
-
         path = x.path2id(uri)
         if not path:
             raise NoSuchResource(uri)
 
-        import pdb; pdb.set_trace()
+        from bzrlib.log import LogFormatter
 
-        ids = x.branch.repository.all_revision_ids()        
-        x.branch.lock_read()
-        try:
-            changes = x.branch.repository.fileids_altered_by_revision_ids(ids)
-        finally:
-            x.branch.unlock()
+        def get_formatter(lst):
+            class ListLogFormatter(LogFormatter):
+                def __init__(self, *args, **kw):
+                    LogFormatter.__init__(self, *args, **kw)
+                    self._loglist = lst
+                def log_revision(self, revision):
+                    self._loglist.append(int(revision.revno))
+            return ListLogFormatter
 
-        if path not in changes:
-            return None
+        from bzrlib.builtins import cmd_log
+        from bzrlib.revisionspec import RevisionSpec
 
-        changes = changes[path]
-        changes = [x.branch.revision_id_to_revno(a) for a in changes]
-        return list(sorted(changes, reverse=True))
+        log = cmd_log()
+        log.outf = None
+
+        foo = []
+
+        rev = None
+
+        absolute_uri = os.path.join(self.checkout_dir, uri)
+
+        log.run(file_list=[absolute_uri],
+                revision=rev and [RevisionSpec.from_string(str(rev))] or None,
+                log_format = get_formatter(foo),
+                )
+
+        return foo
 
     def last_changed_rev(self, uri, rev=None):
         uri = self.normalized(uri)
 
         changes = self.revisions(uri)
 
-        if not changes:
+        if changes is None:
             return None
 
         if rev is None:
@@ -100,6 +113,8 @@ class BzrAccess(object):
             if rev < revno:
                 continue
             return revno
+
+        raise AssertionError("I'm not sure what this should raise")
 
     def read(self, uri, rev=None):
         """

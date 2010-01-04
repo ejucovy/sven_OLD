@@ -79,6 +79,12 @@ https://bugs.edge.launchpad.net/bzr/+bug/97715 is relevant.
    3
    >>> client.last_changed_rev('/path/to')
    3
+   >>> client.last_changed_rev('/path')
+   3
+   >>> client.last_changed_rev('/path', rev=2)
+   2
+   >>> client.last_changed_rev('/path/to', rev=1)
+   ??
 
 You commit changes to an existing file in the same way as saving a new file:
 
