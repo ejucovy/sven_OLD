@@ -84,6 +84,7 @@ class BzrAccess(object):
     def last_changed_rev(self, uri, rev=None):
         uri = self.normalized(uri)
 
+        import pdb; pdb.set_trace()
         changes = self.revisions(uri)
 
         if not changes:
@@ -91,7 +92,9 @@ class BzrAccess(object):
 
         if rev is None:
             return changes[0]
-        
+
+        rev = int(rev)
+
         for revno in changes:
             if rev < revno:
                 continue
@@ -133,6 +136,12 @@ class BzrAccess(object):
                 raise ResourceUnchanged(uri, last_change)
 
         x.lock_read()
+
+        files = dict([(i[0], i[2]) for i in list(x.list_files())])
+        
+        if uri in files and files[uri] == 'directory':
+            raise NotAFile(uri)
+
         try:
             data = x.get_file(path)
         except IOError, e:
@@ -145,7 +154,6 @@ class BzrAccess(object):
 
         kind = self.kind(uri)
         return dict(body=data, kind=kind)
-
 
     def ls(self, uri, rev=None):
         """
@@ -161,20 +169,25 @@ class BzrAccess(object):
 
         uri = self.normalized(uri)
 
-        if rev is not None:
-            rev_id = x.branch.get_rev_id(int(rev))
-            x = x.branch.repository.revision_tree(rev_id)
-
         x.lock_read()
-        try:
-            inv = x.inventory
-        finally:
+
+        if rev is not None:
+            rev = int(rev)
+
+            rev_id = x.branch.get_rev_id(int(rev))
+            y = x.branch.repository.revision_tree(rev_id)
             x.unlock()
+            x = y
+            x.lock_read()
+
+        inv = x.inventory
 
         path = x.path2id(uri)
         dir = inv[path]
 
-        if type(dir) is not InventoryDirectory:
+        x.unlock()
+
+        if not isinstance(dir, InventoryDirectory):
             raise NotADirectory(uri)
 
         if rev is not None:
