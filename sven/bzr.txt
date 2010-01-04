@@ -67,6 +67,19 @@ and checks in these directories in an internal commit. This may change
 in a later version of sven, so don't depend on it too much (but why would
 you?)
 
+Speaking of intermediate directories, let's make sure last_changed_rev works
+properly on directories. We want it to give the log of changes including files
+under the directory's path, not just changes on the directory itself. This is
+known to fail on bzr 1.13.1 and succeeds on bzr 2.0;
+https://bugs.edge.launchpad.net/bzr/+bug/97715 is relevant.
+
+   >>> client.last_changed_rev('/path/to/file')
+   3
+   >>> client.last_changed_rev('/path/to/')
+   3
+   >>> client.last_changed_rev('/path/to')
+   3
+
 You commit changes to an existing file in the same way as saving a new file:
 
    >>> client.write('/file', "second version")

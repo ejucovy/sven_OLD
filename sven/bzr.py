@@ -67,6 +67,8 @@ class BzrAccess(object):
         if not path:
             raise NoSuchResource(uri)
 
+        import pdb; pdb.set_trace()
+
         ids = x.branch.repository.all_revision_ids()        
         x.branch.lock_read()
         try:
@@ -84,7 +86,6 @@ class BzrAccess(object):
     def last_changed_rev(self, uri, rev=None):
         uri = self.normalized(uri)
 
-        import pdb; pdb.set_trace()
         changes = self.revisions(uri)
 
         if not changes:
