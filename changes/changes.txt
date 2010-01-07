@@ -8,8 +8,7 @@
    "always store files prefixed under a date hierarchy" or "add a
    file extension."
 
- * Added bazaar backend and tests; unlike the mercurial backend,
-   I understand it, so this ought to be stable.
+ * Added bazaar backend and tests.
 
  * Implemented custom resource properties for bazaar backend,
    because it doesn't have any concept like `svn propget/propset`.

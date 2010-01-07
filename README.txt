@@ -1,8 +1,8 @@
-It requires `pysvn` which you will probably want to install system-wide[1].
+It can be used with SVN or BZR backends.
 
-Alternatively, you can use Sven with mercurial. This is highly experimental
-at present. Look at ./sven/hg-doctest.txt for details. Sven's hg interface
-is (mostly) the same as the svn interface.
+The SVN backend requires `pysvn` which you will probably want to install system-wide[1].
+
+The BZR backend requires `bzrlib`. Currently only bzr 2.0+ is supported.
 
 Basic usage::
 
