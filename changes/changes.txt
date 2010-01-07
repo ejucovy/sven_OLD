@@ -10,6 +10,10 @@
 
  * Added bazaar backend and tests.
 
+ * Removed experimental mercurial backend. I only need "something
+   faster than subversion" and Bazaar's worldview fits my brain
+   better, so I doubt I'll be maintaining the mercurial backend.
+
  * Implemented custom resource properties for bazaar backend,
    because it doesn't have any concept like `svn propget/propset`.
 
