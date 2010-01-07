@@ -278,7 +278,7 @@ class BaseSvnAccess(object):
 
         return commit_rev
         
-    def write(self, uri, contents, msg=None, kind=None):
+    def write(self, uri, contents, msg=None, kind=None, use_newline=True):
 
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
@@ -320,8 +320,11 @@ class BaseSvnAccess(object):
             self.client.update(path_to_update)
 
         f = file(absolute_uri, 'w')
-        print >> f, contents
+        if use_newline and not contents.endswith('\n'):
+            contents += '\n'
+        f.write(contents)
         f.close()
+
         try:
             self.client.add(absolute_uri)
         except pysvn.ClientError, e:

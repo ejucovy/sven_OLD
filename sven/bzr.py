@@ -347,10 +347,9 @@ class BzrAccess(object):
             x.commit("Auto-creating directories")
 
         f = file(absolute_uri, 'w')
-        if use_newline:
-            print >> f, contents
-        else:
-            f.write(contents)
+        if use_newline and not contents.endswith('\n'):
+            contents += '\n'
+        f.write(contents)
         f.close()
 
         x.add([uri])

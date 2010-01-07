@@ -8,6 +8,11 @@
    "always store files prefixed under a date hierarchy" or "add a
    file extension."
 
+ * When writing contents to a file, Sven used to append a newline
+   to the contents whether or not the contents already ended with
+   a newline. Now, sven will only append a newline if the content
+   doesn't already end in a newline.
+
  * Added bazaar backend and tests.
 
  * Removed experimental mercurial backend. I only need "something
@@ -29,6 +34,7 @@
    '/foo/bar/.sven-meta/.mimetype' and its 'fleem' property lives
    at '/foo/bar/.sven-meta/.fleem'.
 
-   For normal files read and written directly by the user, sven
-   appends a newline to the end of the file. For these files, sven
-   does not append a newline to the end of the file.
+   Note that for normal files read and written directly by the user,
+   sven's default behavior appends a newline to the end of the file
+   if there is none. For these metadata files, sven does not append
+   a newline to the end of the file.
