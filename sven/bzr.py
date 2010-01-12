@@ -267,15 +267,15 @@ class BzrAccess(object):
 
         return [dict(href=uri, fields=i) for i in foo]
 
-    def kind(self, uri):
+    def kind(self, uri, rev=None):
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         if os.path.isdir(absolute_uri):
-            return self._dir_mimetype(uri)
-        return self._file_mimetype(uri)
+            return self._dir_mimetype(uri, rev=rev)
+        return self._file_mimetype(uri, rev=rev)
 
-    def _dir_mimetype(self, uri):
+    def _dir_mimetype(self, uri, rev=None):
         uri = self.normalized(uri)
 
         if not uri:
@@ -285,11 +285,11 @@ class BzrAccess(object):
 
         if not os.path.isdir(absolute_props_uri):
             return None
-        res = self.read('/'.join((uri, '.sven-meta', '.mimetype')))
+        res = self.read('/'.join((uri, '.sven-meta', '.mimetype')), rev=rev)
         if res: return res['body']
         return res
 
-    def _file_mimetype(self, uri):
+    def _file_mimetype(self, uri, rev=None):
         uri = self.normalized(uri)
         props_uri = '/'.join((
                 '.sven-meta/.mimetype', uri))
@@ -298,7 +298,7 @@ class BzrAccess(object):
             raise RuntimeError("Can't do that")
 
         try:
-            res = self.read(props_uri)
+            res = self.read(props_uri, rev=rev)
         except NoSuchResource, e:
             return None
         if res: return res['body']

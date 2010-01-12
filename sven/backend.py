@@ -248,12 +248,19 @@ class BaseSvnAccess(object):
             globs.append(glob)
         return globs
 
-    def kind(self, uri):
+    def kind(self, uri, rev=None):
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
+        if rev is not None:
+            rev = pysvn.Revision(pysvn.opt_revision_kind.number, rev)
+            def propget():
+                return self.client.propget('svn:mime-type', absolute_uri, rev)
+        else:
+            def propget():
+                return self.client.propget('svn:mime-type', absolute_uri)
         try:
-            properties = self.client.propget('svn:mime-type', absolute_uri)
+            properties = propget()
         except pysvn.ClientError, e:
             if e[1][0][1] == 150000: # not under version control
                 return ""
