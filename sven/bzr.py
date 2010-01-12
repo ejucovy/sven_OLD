@@ -97,6 +97,9 @@ class BzrAccess(object):
         return foo
 
     def last_changed_rev(self, uri, rev=None):
+        """
+        @raise:NoSuchResource
+        """
         uri = self.normalized(uri)
 
         changes = self.revisions(uri)
@@ -114,7 +117,7 @@ class BzrAccess(object):
                 continue
             return revno
 
-        raise AssertionError("I'm not sure what this should raise")
+        raise NoSuchResource(uri)
 
     def read(self, uri, rev=None):
         """
@@ -268,14 +271,17 @@ class BzrAccess(object):
         return [dict(href=uri, fields=i) for i in foo]
 
     def mimetype(self, uri, rev=None):
+        return self.propget(uri, 'mimetype', rev=rev)
+
+    def propget(self, uri, prop, rev=None):
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         if os.path.isdir(absolute_uri):
-            return self._dir_mimetype(uri, rev=rev)
-        return self._file_mimetype(uri, rev=rev)
+            return self._dir_prop(uri, prop, rev=rev)
+        return self._file_prop(uri, prop, rev=rev)        
 
-    def _dir_mimetype(self, uri, rev=None):
+    def _dir_prop(self, uri, prop, rev=None):
         uri = self.normalized(uri)
 
         if not uri:
@@ -285,14 +291,14 @@ class BzrAccess(object):
 
         if not os.path.isdir(absolute_props_uri):
             return None
-        res = self.read('/'.join((uri, '.sven-meta', '.mimetype')), rev=rev)
+        res = self.read('/'.join((uri, '.sven-meta', '.%s' % prop)), rev=rev)
         if res: return res['body']
         return res
 
-    def _file_mimetype(self, uri, rev=None):
+    def _file_prop(self, uri, prop, rev=None):
         uri = self.normalized(uri)
         props_uri = '/'.join((
-                '.sven-meta/.mimetype', uri))
+                '.sven-meta/.%s' % prop, uri))
         
         if not uri:
             raise RuntimeError("Can't do that")
@@ -304,26 +310,29 @@ class BzrAccess(object):
         if res: return res['body']
         return res
 
-    def _dir_mimetype_set(self, uri, mimetype, msg=None):
+    def _dir_propset(self, uri, prop, val, msg=None):
         uri = self.normalized(uri)
 
-        return self.write('/'.join((uri, '.sven-meta/.mimetype')),
-                          mimetype, use_newline=False)
+        return self.write('/'.join((uri, '.sven-meta/.%s' % prop)),
+                          val, use_newline=False)
 
-    def _file_mimetype_set(self, uri, mimetype, msg=None):
+    def _file_propset(self, uri, prop, val, msg=None):
         uri = self.normalized(uri)
 
-        return self.write('/'.join(('.sven-meta/.mimetype', uri)),
-                          mimetype, use_newline=False)
-        
-    def set_mimetype(self, uri, mimetype, msg=None):
+        return self.write('/'.join(('.sven-meta/.%s' % prop, uri)),
+                          val, use_newline=False)
+
+    def propset(self, uri, prop, val, msg=None):
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         if os.path.isdir(absolute_uri):
-            return self._dir_mimetype_set(uri, mimetype, msg=msg)
-        return self._file_mimetype_set(uri, mimetype, msg=msg)
+            return self._dir_propset(uri, prop, val, msg=msg)
+        return self._file_propset(uri, prop, val, msg=msg)
         
+    def set_mimetype(self, uri, mimetype, msg=None):
+        return self.propset(uri, 'mimetype', mimetype, msg=msg)
+
     def write(self, uri, contents, msg=None, mimetype=None, use_newline=True):
 
         uri = self.normalized(uri)

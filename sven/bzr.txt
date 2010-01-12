@@ -84,7 +84,9 @@ https://bugs.edge.launchpad.net/bzr/+bug/97715 is relevant.
    >>> client.last_changed_rev('/path', rev=2)
    2
    >>> client.last_changed_rev('/path/to', rev=1)
-   ??
+   Traceback (most recent call last):
+   ...
+   NoSuchResource: [Errno 2] No such file or directory: 'path/to'   
 
 You commit changes to an existing file in the same way as saving a new file:
 
@@ -148,7 +150,7 @@ set the file's svn:mime-type property:
 
    >>> client.write('file', "now with metadata",
    ...              msg="Changed the content",
-   ...              kind="text/plain")
+   ...              mimetype="text/plain")
    <Revision kind=number 5>
 
    >>> client.read('file')
@@ -228,4 +230,3 @@ sven's natural inclination to clobber conflicting changesets, viz.:
    ... except:
    ...     client2.write('file', 'booga booga boo', update_before_write=True)
    <Revision kind=number 28>
-
