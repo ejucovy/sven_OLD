@@ -1,3 +1,13 @@
+ * Added bazaar backend and tests.
+
+ * client.kind(uri) now takes an optional integer `rev` parameter
+   like everything else.
+ 
+ * Removed experimental mercurial backend. I only need "something
+   faster than subversion" and Bazaar's worldview fits my brain
+   better, so I doubt I'll be maintaining the mercurial backend.
+   If you're using it, please complain loudly, because I didn't
+   know that you were using it.
 
  * Refactored path normalization in SVN backend classes and added
    optional `path_fixer` callable argument to constructor.
@@ -8,16 +18,13 @@
    "always store files prefixed under a date hierarchy" or "add a
    file extension."
 
+   I'm probably overabstracting too early, though, so I won't be
+   surprised if I scrap this idea.
+
  * When writing contents to a file, Sven used to append a newline
    to the contents whether or not the contents already ended with
    a newline. Now, sven will only append a newline if the content
    doesn't already end in a newline.
-
- * Added bazaar backend and tests.
-
- * Removed experimental mercurial backend. I only need "something
-   faster than subversion" and Bazaar's worldview fits my brain
-   better, so I doubt I'll be maintaining the mercurial backend.
 
  * Implemented custom resource properties for bazaar backend,
    because it doesn't have any concept like `svn propget/propset`.
