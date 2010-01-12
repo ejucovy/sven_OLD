@@ -232,44 +232,40 @@ class BzrAccess(object):
         etc.
         """
 
-        return []
+        from bzrlib.log import LogFormatter
 
-        uri = self.normalized(uri)
-        absolute_uri = '/'.join((self.checkout_dir, uri))
+        def get_formatter(lst):
+            class ListLogFormatter(LogFormatter):
+                def __init__(self, *args, **kw):
+                    LogFormatter.__init__(self, *args, **kw)
+                    self._loglist = lst
+                def log_revision(self, revision):
+                    revno = int(revision.revno)
+                    author = revision.rev.committer  # @@@ what about get_apparent_authors?
+                    message = revision.rev.message.rstrip('\r\n')
+                    self._loglist.append(dict(version=revno,
+                                              author=author,
+                                              message=message,
+                                              id=uri))
+            return ListLogFormatter
 
-        if rev is not None:
-            last_change = self.last_changed_rev(uri, rev)
-            if last_change < int(rev):
-                raise ResourceUnchanged(uri, last_change)
+        from bzrlib.builtins import cmd_log
+        from bzrlib.revisionspec import RevisionSpec
 
-            rev = pysvn.Revision(pysvn.opt_revision_kind.number, rev)
-            try:
-                log = self.client.log(absolute_uri, rev,
-                                      discover_changed_paths=True)
-            except pysvn.ClientError, e:
-                if e[1][0][1] == 150004: # has no URL
-                    raise NoSuchResource(uri)
-                raise
-        else:
-            try:
-                log = self.client.log(absolute_uri,
-                                      discover_changed_paths=True)
-            except pysvn.ClientError, e:
-                if e[1][0][1] == 200005: # not under version control
-                    raise NoSuchResource(uri)
-                raise
+        log = cmd_log()
+        log.outf = None
 
-        globs = []
-        for obj in log:
-            href = obj.changed_paths[0].path
-            glob = dict(href=href)
-            fields = {'id': href,
-                      'message': obj.message,
-                      'author': obj.author,
-                      'version': obj.revision.number}
-            glob['fields'] = fields
-            globs.append(glob)
-        return globs
+        foo = []
+
+        absolute_uri = os.path.join(self.checkout_dir, self.normalized(uri))
+
+        log.run(file_list=[absolute_uri],
+                revision=rev and [RevisionSpec.from_string("1"),
+                                  RevisionSpec.from_string(str(rev))] or None,
+                log_format = get_formatter(foo),
+                )
+
+        return [dict(href=uri, fields=i) for i in foo]
 
     def kind(self, uri):
         uri = self.normalized(uri)
