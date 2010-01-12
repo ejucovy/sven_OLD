@@ -168,8 +168,8 @@ class BzrAccess(object):
 
         data = data.read()
 
-        kind = self.kind(uri)
-        return dict(body=data, kind=kind)
+        mimetype = self.mimetype(uri)
+        return dict(body=data, mimetype=mimetype)
 
     def ls(self, uri, rev=None):
         """
@@ -267,7 +267,7 @@ class BzrAccess(object):
 
         return [dict(href=uri, fields=i) for i in foo]
 
-    def kind(self, uri, rev=None):
+    def mimetype(self, uri, rev=None):
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
@@ -316,15 +316,15 @@ class BzrAccess(object):
         return self.write('/'.join(('.sven-meta/.mimetype', uri)),
                           mimetype, use_newline=False)
         
-    def set_kind(self, uri, kind, msg=None):
+    def set_mimetype(self, uri, mimetype, msg=None):
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         if os.path.isdir(absolute_uri):
-            return self._dir_mimetype_set(uri, kind, msg=msg)
-        return self._file_mimetype_set(uri, kind, msg=msg)
+            return self._dir_mimetype_set(uri, mimetype, msg=msg)
+        return self._file_mimetype_set(uri, mimetype, msg=msg)
         
-    def write(self, uri, contents, msg=None, kind=None, use_newline=True):
+    def write(self, uri, contents, msg=None, mimetype=None, use_newline=True):
 
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
@@ -358,8 +358,8 @@ class BzrAccess(object):
         except (BoundBranchOutOfDate, ConflictsInTree), e:
             raise ResourceChanged(uri)
 
-        if kind is not None:
-            self.set_kind(uri, kind, msg=msg)
+        if mimetype is not None:
+            self.set_mimetype(uri, mimetype, msg=msg)
 
         return R(x.branch.revision_id_to_revno(rev_id))
 
