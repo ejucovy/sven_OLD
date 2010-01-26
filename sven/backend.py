@@ -143,7 +143,7 @@ class BaseSvnAccess(object):
             rev = pysvn.Revision(pysvn.opt_revision_kind.number, rev)
             try:
                 return {'body': self.client.cat(absolute_uri, rev),
-                        'kind': self.kind(uri),
+                        'mimetype': self.mimetype(uri),
                         }
             except pysvn.ClientError, e:
                 if e[1][0][1] == 195007: # URL refers to a directory
@@ -152,7 +152,7 @@ class BaseSvnAccess(object):
 
         try:
             return {'body': file(absolute_uri).read(),
-                    'kind': self.kind(uri),
+                    'mimetype': self.mimetype(uri),
                     }
         except IOError, e:
             if e.errno == 21:
@@ -248,7 +248,7 @@ class BaseSvnAccess(object):
             globs.append(glob)
         return globs
 
-    def kind(self, uri, rev=None):
+    def mimetype(self, uri, rev=None):
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
@@ -272,21 +272,20 @@ class BaseSvnAccess(object):
     
         return properties.get(absolute_uri)
 
-    def set_kind(self, uri, kind, msg=None):
+    def set_mimetype(self, uri, mimetype, msg=None):
 
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
-        self.client.propset('svn:mime-type', kind, absolute_uri)
+        self.client.propset('svn:mime-type', mimetype, absolute_uri)
         
         if not msg:
-            msg = "Set svn:mime-type property to '%s'" % kind
+            msg = "Set svn:mime-type property to '%s'" % mimetype
         commit_rev = self.client.checkin([absolute_uri], msg)
 
         return commit_rev
         
-    def write(self, uri, contents, msg=None, kind=None, use_newline=True):
-
+    def write(self, uri, contents, msg=None, mimetype=None, use_newline=True):
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
@@ -343,8 +342,8 @@ class BaseSvnAccess(object):
         if not msg: # wish we could just do `if msg is None`, but we can't.
             msg = self.default_message
 
-        if kind:
-            self.client.propset('svn:mime-type', kind, absolute_uri)
+        if mimetype:
+            self.client.propset('svn:mime-type', mimetype, absolute_uri)
 
         try:
             commit_rev = self.client.checkin([absolute_uri], msg)
@@ -360,21 +359,21 @@ class BaseSvnAccess(object):
 
 
 class SvnAccessWriteUpdateHandler(BaseSvnAccess):
-    def set_kind(self, uri, kind, msg=None,
-                 update_before_write=True,
-                 update_after_write=True):
+    def set_mimetype(self, uri, mimetype, msg=None,
+                     update_before_write=True,
+                     update_after_write=True):
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         if update_before_write:
             self.client.update(self.checkout_dir)
 
-        BaseSvnAccess.set_kind(self, uri, kind, msg)
+        BaseSvnAccess.set_mimetype(self, uri, mimetype, msg)
 
         if update_after_write:
             self.client.update(self.checkout_dir)
 
-    def write(self, uri, contents, msg=None, kind=None,
+    def write(self, uri, contents, msg=None, mimetype=None,
               update_before_write=True,
               update_after_write=True):
         uri = self.normalized(uri)
@@ -383,7 +382,7 @@ class SvnAccessWriteUpdateHandler(BaseSvnAccess):
         if update_before_write:
             self.client.update(self.checkout_dir)
 
-        result = BaseSvnAccess.write(self, uri, contents, msg, kind)
+        result = BaseSvnAccess.write(self, uri, contents, msg, mimetype)
 
         if update_after_write:
             self.client.update(self.checkout_dir)
@@ -403,26 +402,26 @@ class SvnAccessEventEmitter(SvnAccess):
     def add_listener(self, callback):
         self.listeners.append(callback)
 
-    def set_kind(self, uri, kind, msg=None):
+    def set_mimetype(self, uri, mimetype, msg=None):
 
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         pre_rev = self.client.info2(absolute_uri)[0][1].rev
-        post_rev = SvnAccess.set_kind(self, uri, kind, msg)
+        post_rev = SvnAccess.set_mimetype(self, uri, mimetype, msg)
 
         for callback in self.listeners:
-            callback(absolute_uri, contents, msg, kind, (pre_rev, post_rev))
+            callback(absolute_uri, contents, msg, mimetype, (pre_rev, post_rev))
 
-    def write(self, uri, contents, msg=None, kind=None):
+    def write(self, uri, contents, msg=None, mimetype=None):
 
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
         pre_rev = self.client.info2(absolute_uri)[0][1].rev
-        post_rev = SvnAccess.write(self, uri, contents, msg, kind)
+        post_rev = SvnAccess.write(self, uri, contents, msg, mimetype)
         for callback in self.listeners:
-            callback(uri, contents, msg, kind, (pre_rev, post_rev))
+            callback(uri, contents, msg, mimetype, (pre_rev, post_rev))
 
 if __name__ == '__main__':
     import doctest
