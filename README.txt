@@ -11,7 +11,7 @@ Basic usage::
     
     client.write('path/to/a/file/to/write', "Lovely content to be versioning!")
     client.write('path/to/another/file', "Aw shucks, I'll version this too..",
-                 msg="My commit message", kind='text/plain')
+                 msg="My commit message", mimetype='text/plain')
 
     last_rev_int = client.last_changed_rev('path/to/another/file')
 
