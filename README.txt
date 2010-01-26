@@ -24,21 +24,29 @@ Basic usage::
         earlier_version = client.read('path/to/another/file', rev=last_rev_int)
 	
     changelog = client.log('path/to/another/file', rev=last_rev_int)
-    
+
+To use the BZR backend,
+
+    from sven.bzr import BzrAccess
+
+The interface is the same.
+
 Each `.write` writes the content to the path on the local filesystem's checkout
 and then commits it to the repository. The workflow of one-write-per-commit is
 by design and is not likely to change soon; if you need a different workflow,
 you probably ought to just be using svn clients directly, anyway.
 
-Currently sven does not help you set up an svn client or server.  It assumes
-you've already got a repository and checkout set up.
+Currently sven does not help you set up a repository client or server.  It 
+assumes you've already got a repository and checkout (which may be the same
+thing, in the BZR case) set up.
 
-The formats returned by some of its methods (particularly .log and .ls) are
+The formats returned by some of its methods (.read, .log and .ls) are
 totally ad-hoc right now and strange; they'll probably be formalized sooner
 or later.
 
 For more detailed usage documentation please see ./sven/doctest.txt (which
-can be run as a test suite by `python sven/backend.py`)
+can be run as a test suite by `python sven/backend.py`) and ./sven/bzr.txt
+(which can be run as a test suite by `python sven/bzr.py`)
 
 [1] If you start to experience Segmentation faults while using sven, especially
     during .write operations, your versions of ``svn`` and ``pysvn`` are likely
