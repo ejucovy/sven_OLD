@@ -1,1 +1,1 @@
-Brown bag release; update SVN backend to talk about 'mimetype' instead of 'kind'.
+Fix bug in SVN backend's 'mimetype' getter.

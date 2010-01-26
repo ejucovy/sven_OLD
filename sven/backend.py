@@ -250,7 +250,9 @@ class BaseSvnAccess(object):
 
     def mimetype(self, uri, rev=None):
         uri = self.normalized(uri)
-        absolute_uri = '/'.join((self.checkout_dir, uri))
+        absolute_uri = '/'.join((
+                self.checkout_dir.rstrip('/'),
+                uri))
 
         if rev is not None:
             rev = pysvn.Revision(pysvn.opt_revision_kind.number, rev)

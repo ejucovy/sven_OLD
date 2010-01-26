@@ -1,3 +1,8 @@
+0.7.1 (2010-01-26)
+==================
+
+ * Update SVN backend to talk about 'mimetype' instead of 'kind'.
+
 0.7 (2010-01-26)
 ================
 
