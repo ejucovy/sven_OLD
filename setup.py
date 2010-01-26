@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.7dev'
+version = '0.7'
 
 long_description = open('README.txt').read()
 new_in_this_version = open('changes/changes.txt').read()
@@ -28,16 +28,14 @@ setup(name='sven',
       classifiers=[],
       keywords='',
       author='Ethan Jucovy & Jeff Hammel',
-      author_email='ejucovy+sven@gmail.com',
+      author_email='ejucovy@gmail.com',
       url='',
       license='GPL',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       include_package_data=True,
       zip_safe=False,
       install_requires=[
-          # -*- Extra requirements: -*-
       ],
       entry_points="""
-      # -*- Entry points: -*-
       """,
       )

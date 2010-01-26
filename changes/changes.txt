@@ -1,13 +1,16 @@
  * Added bazaar backend and tests.
 
- * client.kind(uri) now takes an optional integer `rev` parameter
-   like everything else.
- 
  * Removed experimental mercurial backend. I only need "something
    faster than subversion" and Bazaar's worldview fits my brain
    better, so I doubt I'll be maintaining the mercurial backend.
    If you're using it, please complain loudly, because I didn't
    know that you were using it.
+
+ * client.kind(uri) now takes an optional integer `rev` parameter
+   like everything else.
+
+ * The strange dictionary returned by .read() now uses keys named
+   'body' and 'mimetype' instead of 'body' and 'kind'.
 
  * Refactored path normalization in SVN backend classes and added
    optional `path_fixer` callable argument to constructor.
