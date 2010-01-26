@@ -334,7 +334,6 @@ class BzrAccess(object):
         return self.propset(uri, 'mimetype', mimetype, msg=msg)
 
     def write(self, uri, contents, msg=None, mimetype=None, use_newline=True):
-
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 

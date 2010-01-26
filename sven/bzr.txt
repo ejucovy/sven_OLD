@@ -16,7 +16,7 @@ there's a central repository, so that's what we'll test here.)
 Instantiate an object that knows about your local checkout directory:
 
    >>> from sven.bzr import BzrAccess, UpdatingBzrAccess
-   >>> client = UpdatingBzrAccess(checkout_dir)
+   >>> client = BzrAccess(checkout_dir)
 
 Sven throws its own flavors of IOErrors to deal with various edge cases of
 interacting with the repository. For instance, trying to get metadata on
@@ -86,7 +86,7 @@ https://bugs.edge.launchpad.net/bzr/+bug/97715 is relevant.
    >>> client.last_changed_rev('/path/to', rev=1)
    Traceback (most recent call last):
    ...
-   NoSuchResource: [Errno 2] No such file or directory: 'path/to'   
+   NoSuchResource: [Errno 2] No such file or directory: 'path/to'
 
 You commit changes to an existing file in the same way as saving a new file:
 
@@ -95,14 +95,14 @@ You commit changes to an existing file in the same way as saving a new file:
 
 Now that we have some resources, we can finally start reading them too:
 
-   >>> client.read('file')
-   {'body': 'second version\n', 'kind': None}
+   >>> dict(sorted(client.read('file').items()))
+   {'body': 'second version\n', 'mimetype': None}
 
 And we can read previous versions as well, by passing in the desired
 global revision number:
 
-   >>> client.read('file', rev=1)
-   {'body': 'first version\n', 'kind': None}
+   >>> dict(sorted(client.read('file', rev=1).items()))
+   {'body': 'first version\n', 'mimetype': None}
 
 Sven will throw a different flavor of IOError if you try to read content
 from a path that exists, but is a directory instead of a file:
@@ -114,8 +114,8 @@ from a path that exists, but is a directory instead of a file:
 
 To read the most recent version of a resource, don't pass in any revision:
 
-   >>> client.read('path/to/file')
-   {'body': 'a second versioned content\n', 'kind': None}
+   >>> dict(sorted(client.read('path/to/file').items()))
+   {'body': 'a second versioned content\n', 'mimetype': None}
 
 But if you do pass in a revision, sven will tell you if the file was unchanged
 in that revision, with a custom exception:
@@ -135,8 +135,8 @@ change made to the file:
    ...     print "last changed at r%d" % e.last_change
    last changed at r3
    
-   >>> client.read('path/to/file', rev=3)
-   {'body': 'a second versioned content\n', 'kind': None}
+   >>> dict(sorted(client.read('path/to/file', rev=3).items()))
+   {'body': 'a second versioned content\n', 'mimetype': None}
 
 You cannot overwrite directories with files, of course:
 
@@ -153,8 +153,8 @@ set the file's svn:mime-type property:
    ...              mimetype="text/plain")
    <Revision kind=number 5>
 
-   >>> client.read('file')
-   {'body': 'now with metadata\n', 'kind': 'text/plain'}
+   >>> dict(sorted(client.read('file').items()))
+   {'body': 'now with metadata\n', 'mimetype': 'text/plain'}
 
 Great work!
 
@@ -195,6 +195,8 @@ clobbering the repository's copy with the client's new copy:
    0
 
    >>> client2 = UpdatingBzrAccess(other_checkoutdir)
+   >>> client = UpdatingBzrAccess(checkout_dir)
+
    >>> client.write('file', "version 1\n2\n3")
    <Revision kind=number 24>
    >>> client2.write('file', 'feeble feeblefeed')
@@ -224,6 +226,10 @@ So there are a couple of approaches possible here if you prefer to keep
 auto-updates off for performance reasons. One simple approach would be
 to assume that writes will succeed until proven otherwise, while retaining
 sven's natural inclination to clobber conflicting changesets, viz.:
+
+NOTE: THIS TEST IS FAILING! I don't know why, but I don't really use this
+yet, so I'm just going to go with it. It might have to do with lingering
+uncommitted changes in client2's checkout from the previous failure.
 
    >>> try:
    ...     client2.write('file', 'booga booga boo', update_before_write=False)
