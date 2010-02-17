@@ -333,7 +333,8 @@ class BzrAccess(object):
     def set_mimetype(self, uri, mimetype, msg=None):
         return self.propset(uri, 'mimetype', mimetype, msg=msg)
 
-    def write(self, uri, contents, msg=None, mimetype=None, use_newline=True):
+    def write(self, uri, contents, msg=None, mimetype=None,
+              use_newline=True, binary=False):
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
@@ -350,7 +351,12 @@ class BzrAccess(object):
             x.smart_add([absolute_parent_dir])
             x.commit("Auto-creating directories")
 
-        f = file(absolute_uri, 'w')
+        mode = 'w'
+        if binary is True:
+            mode = 'wb'
+            use_newline = False
+        f = file(absolute_uri, mode)
+
         if use_newline and not contents.endswith('\n'):
             contents += '\n'
         f.write(contents)

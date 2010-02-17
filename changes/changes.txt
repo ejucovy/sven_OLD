@@ -1,1 +1,3 @@
-
+ * Added boolean `binary` argument to .write() with default False.
+   If binary=True, use_newline:=False, and the file is written in
+   mode='wb' instead of mode='w'.

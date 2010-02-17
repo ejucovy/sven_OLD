@@ -287,7 +287,8 @@ class BaseSvnAccess(object):
 
         return commit_rev
         
-    def write(self, uri, contents, msg=None, mimetype=None, use_newline=True):
+    def write(self, uri, contents, msg=None, mimetype=None, 
+              use_newline=True, binary=False):
         uri = self.normalized(uri)
         absolute_uri = '/'.join((self.checkout_dir, uri))
 
@@ -327,7 +328,11 @@ class BaseSvnAccess(object):
             path_to_update = '/'.join([self.checkout_dir] + path)
             self.client.update(path_to_update)
 
-        f = file(absolute_uri, 'w')
+        mode = 'w'
+        if binary is True:
+            use_newline = False
+            mode = 'wb'
+        f = file(absolute_uri, mode)
         if use_newline and not contents.endswith('\n'):
             contents += '\n'
         f.write(contents)
