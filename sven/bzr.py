@@ -202,6 +202,9 @@ class BzrAccess(object):
         inv = x.inventory
 
         path = x.path2id(uri)
+        if path is None:
+            raise NoSuchResource(uri)
+
         dir = inv[path]
 
         x.unlock()
@@ -226,6 +229,22 @@ class BzrAccess(object):
             globs.append(glob)
         return globs
 
+    def proplist(self, uri):
+        uri = self.normalized(uri)
+        absolute_uri = '/'.join((self.checkout_dir, uri))
+
+        if os.path.isdir(absolute_uri):
+            path = '/'.join((uri, '.sven-meta'))
+            try:
+                return [i['fields']['id']
+                        [len(uri)+len('.sven-meta/.')+1:] 
+                        for i in self.ls(path)]
+            except NoSuchResource:
+                return []
+        else:
+            return [i['fields']['id'][len('.sven-meta/.'):] 
+                    for i in self.ls(path)]
+            
     def log(self, uri, rev=None):
         """
         Return the changelog of data stored at or under @param:uri
