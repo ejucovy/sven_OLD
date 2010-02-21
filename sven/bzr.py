@@ -246,9 +246,11 @@ class BzrAccess(object):
                     revno = int(revision.revno)
                     author = revision.rev.committer  # @@@ what about get_apparent_authors?
                     message = revision.rev.message.rstrip('\r\n')
+                    timestamp = revision.rev.timestamp
                     self._loglist.append(dict(version=revno,
                                               author=author,
                                               message=message,
+                                              timestamp=timestamp,
                                               id=uri))
             return ListLogFormatter
 
