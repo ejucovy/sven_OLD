@@ -242,6 +242,7 @@ class BzrAccess(object):
             except NoSuchResource:
                 return []
         else:
+            path = '/.sven-meta'
             return [i['fields']['id'][len('.sven-meta/.'):] 
                     for i in self.ls(path)]
             
