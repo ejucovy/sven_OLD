@@ -142,7 +142,7 @@ class BzrAccess(object):
             try:
                 rev_id = x.branch.get_rev_id(int(rev))
             except NoSuchRevision, e:
-                raise NoSuchResource(uri)
+                raise FutureRevision(int(rev))
             x = x.branch.repository.revision_tree(rev_id)
 
         path = x.path2id(uri)

@@ -22,3 +22,9 @@ class ResourceUnchanged(Exception):
 class ResourceChanged(Exception):
     def __init__(self, uri):
         Exception.__init__(self, "Resource '%s' is out of date" % uri)
+        self.uri = uri
+
+class FutureRevision(Exception):
+    def __init__(self, rev):
+        Exception.__init__(self, "No such revision %s yet in the repository" % rev)
+        self.rev = rev
